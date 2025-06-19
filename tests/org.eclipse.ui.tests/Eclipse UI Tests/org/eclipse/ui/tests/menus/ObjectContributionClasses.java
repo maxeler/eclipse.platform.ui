@@ -72,17 +72,17 @@ public class ObjectContributionClasses implements IAdapterFactory {
 		@SuppressWarnings("unchecked")
 		@Override
 		public <T> T getAdapter(Class<T> adapter) {
-			if (adapter == IF.class) {
+			if (adapter == IF_.class) {
 				return (T) new F();
 			}
 			return null;
 		}
 	}
 
-	public static interface IF extends IAdaptable {
+	public static interface IF_ extends IAdaptable {
 	}
 
-	public static class F implements IF {
+	public static class F implements IF_ {
 		@Override
 		public <T> T getAdapter(Class<T> adapter) {
 			return null;
