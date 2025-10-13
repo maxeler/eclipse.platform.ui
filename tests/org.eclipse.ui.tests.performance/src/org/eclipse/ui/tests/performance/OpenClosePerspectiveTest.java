@@ -15,6 +15,10 @@
 
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,6 +40,7 @@ import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.tests.harness.util.EmptyPerspective;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -44,20 +49,19 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
+
 	private final String id;
 
-	@Parameters
+	@Parameters(name = "{index}: {0}")
 	public static Collection<Object[]> data() {
-		return Arrays.asList(new Object[][] { { EmptyPerspective.PERSP_ID2, BasicPerformanceTest.NONE }, {
-				UIPerformanceTestSetup.PERSPECTIVE1,
-				BasicPerformanceTest.LOCAL },
-				{ "org.eclipse.ui.resourcePerspective", BasicPerformanceTest.NONE },
-				{ "org.eclipse.jdt.ui.JavaPerspective", BasicPerformanceTest.NONE },
-				{ "org.eclipse.debug.ui.DebugPerspective", BasicPerformanceTest.NONE } });
+		return Arrays.asList(new Object[][] { { EmptyPerspective.PERSP_ID2 }, { UIPerformanceTestRule.PERSPECTIVE1 },
+				{ "org.eclipse.ui.resourcePerspective" }, { "org.eclipse.jdt.ui.JavaPerspective" },
+				{ "org.eclipse.debug.ui.DebugPerspective" } });
 	}
 
-	public OpenClosePerspectiveTest(String id, int tagging) {
-		super("testOpenClosePerspectives:" + id, tagging);
+	public OpenClosePerspectiveTest(String id) {
 		this.id = id;
 	}
 
@@ -95,7 +99,9 @@ public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 			activePage.showView(i);
 		}
 
-		tagIfNecessary("UI - Open/Close " + perspective1.getLabel() + " Perspective", Dimension.ELAPSED_PROCESS);
+		if (id.equals(UIPerformanceTestRule.PERSPECTIVE1)) {
+			tagAsSummary("UI - Open/Close " + perspective1.getLabel() + " Perspective", Dimension.ELAPSED_PROCESS);
+		}
 
 		exercise(() -> {
 			processEvents();
@@ -116,8 +122,7 @@ public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 	private void closePerspective(IWorkbenchPage activePage) {
 		IPerspectiveDescriptor persp = activePage.getPerspective();
 
-		ICommandService commandService = fWorkbench
-				.getService(ICommandService.class);
+		ICommandService commandService = getWorkbench().getService(ICommandService.class);
 		Command command = commandService
 				.getCommand("org.eclipse.ui.window.closePerspective");
 
@@ -128,8 +133,7 @@ public class OpenClosePerspectiveTest extends BasicPerformanceTest {
 		ParameterizedCommand pCommand = ParameterizedCommand.generateCommand(
 				command, parameters);
 
-		IHandlerService handlerService = fWorkbench
-				.getService(IHandlerService.class);
+		IHandlerService handlerService = getWorkbench().getService(IHandlerService.class);
 		try {
 			handlerService.executeCommand(pCommand, null);
 		} catch (ExecutionException | NotDefinedException | NotEnabledException | NotHandledException e1) {

@@ -14,6 +14,10 @@
 
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.junit.Assert.fail;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,12 +26,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.tests.performance.parts.PerformanceProblemsView;
 import org.eclipse.ui.texteditor.MarkerUtilities;
+import org.junit.Test;
 
 /**
  * The ProblemsViewPerformanceTest is a test of population of the problems view.
@@ -41,15 +45,9 @@ public class ProblemsViewPerformanceTest extends BasicPerformanceTest {
 	private final String PROBLEMS_VIEW_ID = "org.eclipse.ui.tests.performance.problemsView";
 
 	/**
-	 * Create a new instance of the receiver.
-	 */
-	public ProblemsViewPerformanceTest(String testName) {
-		super(testName);
-	}
-
-	/**
 	 * Test the population of the problems view.
 	 */
+	@Test
 	public void testPopulation() {
 		IWorkbenchWindow window = openTestWindow(EMPTY_PERSPECTIVE_ID);
 		final IWorkbenchPage page = window.getActivePage();
@@ -63,9 +61,6 @@ public class ProblemsViewPerformanceTest extends BasicPerformanceTest {
 			fail();
 			return;
 		}
-
-		tagIfNecessary("UI - Problems View population",
-				Dimension.ELAPSED_PROCESS);
 
 		for (int i = 0; i < 100; i++) {
 			createMarkers();

@@ -35,6 +35,10 @@ import org.eclipse.jface.bindings.keys.KeySequence;
 import org.eclipse.jface.bindings.keys.KeyStroke;
 import org.eclipse.jface.bindings.keys.ParseException;
 import org.eclipse.jface.util.Util;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * <p>
@@ -47,6 +51,9 @@ import org.eclipse.jface.util.Util;
  * @since 3.1
  */
 public final class CommandsPerformanceTest extends BasicPerformanceTest {
+
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
 
 	/**
 	 * <p>
@@ -146,16 +153,6 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	private ContextManager contextManager = null;
 
 	/**
-	 * Constructs an instance of <code>CommandsPerformanceTest</code>.
-	 *
-	 * @param name
-	 *            Test's name.
-	 */
-	public CommandsPerformanceTest(final String name) {
-		super(name);
-	}
-
-	/**
 	 * <p>
 	 * Sets up a sufficiently complex set of bindings.
 	 * </p>
@@ -181,10 +178,8 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	 * @throws NotDefinedException
 	 *             If something went wrong initializing the active scheme.
 	 */
-	@Override
-	protected final void doSetUp() throws NotDefinedException, Exception {
-		super.doSetUp();
-
+	@Before
+	public final void setUpBindings() throws NotDefinedException, Exception {
 		/*
 		 * The constants to use in creating the various objects. The platform
 		 * locale count must be greater than or equal to the number of deletion
@@ -351,12 +346,11 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 		bindingManager.setBindings(bindings);
 	}
 
-	@Override
-	protected final void doTearDown() throws Exception {
+	@After
+	public final void clearBindings() throws Exception {
 		bindingManager = null;
 		commandManager = null;
 		contextManager = null;
-		super.doTearDown();
 	}
 
 	/**
@@ -369,6 +363,7 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	 * @throws ParseException
 	 *             If "CTRL+F" can't be parsed for some strange reason.
 	 */
+	@Test
 	public final void testBindingCacheHitHard() throws ParseException {
 		// Constants
 		final int cacheHits = 1000000;
@@ -398,6 +393,7 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	 * @throws ParseException
 	 *             If "CTRL+F" can't be parsed for some strange reason.
 	 */
+	@Test
 	public final void testBindingCacheHitHardReverse() throws ParseException {
 		// Constants
 		final int cacheHits = 1000000;
@@ -426,6 +422,7 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	 * @throws ParseException
 	 *             If "CTRL+F" can't be parsed for some strange reason.
 	 */
+	@Test
 	public final void testBindingCacheHitSoft() throws ParseException {
 		// Constants
 		final int cacheHits = 10000;
@@ -465,6 +462,7 @@ public final class CommandsPerformanceTest extends BasicPerformanceTest {
 	 * @throws ParseException
 	 *             If "CTRL+F" can't be parsed for some strange reason.
 	 */
+	@Test
 	public final void testBindingCacheMissLarge() throws ParseException {
 		// Constants
 		final KeySequence keySequence = KeySequence.getInstance("CTRL+F");

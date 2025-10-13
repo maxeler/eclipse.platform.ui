@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.dialogs;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -43,14 +45,17 @@ import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.registry.WorkingSetDescriptor;
 import org.eclipse.ui.internal.registry.WorkingSetRegistry;
 import org.eclipse.ui.tests.TestPlugin;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.DialogCheck;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 /**
  * Abstract test class for the working set wizard tests.
  */
-public abstract class UIWorkingSetWizardsAuto<W extends IWizard> extends UITestCase {
+public abstract class UIWorkingSetWizardsAuto<W extends IWizard> {
 	protected static final String WORKING_SET_NAME_1 = "ws1";
 
 	protected static final String WORKING_SET_NAME_2 = "ws2";
@@ -58,6 +63,9 @@ public abstract class UIWorkingSetWizardsAuto<W extends IWizard> extends UITestC
 	private static final int SIZING_WIZARD_WIDTH_2 = 500;
 
 	private static final int SIZING_WIZARD_HEIGHT_2 = 500;
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	private WizardDialog wizardDialog;
 
@@ -68,10 +76,6 @@ public abstract class UIWorkingSetWizardsAuto<W extends IWizard> extends UITestC
 	private IProject project2;
 
 	private IFile fileInProject2;
-
-	public UIWorkingSetWizardsAuto(String name) {
-		super(name);
-	}
 
 	protected WizardDialog getWizardDialog() {
 		return wizardDialog;
@@ -93,9 +97,8 @@ public abstract class UIWorkingSetWizardsAuto<W extends IWizard> extends UITestC
 		return fileInProject2;
 	}
 
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		wizardToTest = createWizardToTest();
 		wizardDialog = createWizardDialog();
 		initializeTestResources();
@@ -120,16 +123,15 @@ public abstract class UIWorkingSetWizardsAuto<W extends IWizard> extends UITestC
 		fileInProject2 = FileUtil.createFile("f2.txt", project2);
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
+	@After
+	public final void tearDown() throws Exception {
 		removeAllWorkingSets();
 		cleanupWorkspace();
 		disposeWizardAndDialog();
-		super.doTearDown();
 	}
 
 	private void removeAllWorkingSets() {
-		IWorkingSetManager workingSetManager = fWorkbench.getWorkingSetManager();
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 		IWorkingSet[] workingSets = workingSetManager.getWorkingSets();
 		for (IWorkingSet workingSet : workingSets) {
 			workingSetManager.removeWorkingSet(workingSet);

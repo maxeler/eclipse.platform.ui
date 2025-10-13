@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.internal;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Event;
@@ -20,13 +22,19 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.tests.api.ListElement;
 import org.eclipse.ui.tests.api.ListView;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * This class contains tests for popup menu enablement
  */
-public abstract class ActionExpressionTest extends UITestCase {
+public abstract class ActionExpressionTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindowsRule = new CloseTestWindowsRule();
+
 	protected IWorkbenchWindow fWindow;
 
 	protected IWorkbenchPage fPage;
@@ -39,13 +47,8 @@ public abstract class ActionExpressionTest extends UITestCase {
 
 	ListElement redTrue = new ListElement("red", true);
 
-	public ActionExpressionTest(String testName) {
-		super(testName);
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		fWindow = openTestWindow();
 		fPage = fWindow.getActivePage();
 	}

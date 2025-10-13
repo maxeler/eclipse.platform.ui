@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -20,17 +22,24 @@ import org.eclipse.core.runtime.SubMonitor;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.IPreferenceConstants;
 import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.eclipse.ui.tests.harness.util.PreferenceMementoRule;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
 
 /**
  * Verifies the performance of progress reporting APIs in various contexts which
  * offer progress monitoring.
  */
 public class ProgressReportingTest extends BasicPerformanceTest {
+
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
 
 	/**
 	 * Number of iterations to run for the inner loop in these tests. This
@@ -62,24 +71,21 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	 * results during profiling.
 	 */
 	public static final int MAX_ITERATIONS = 100;
+
+	@Rule
+	public final PreferenceMementoRule preferenceMemento = new PreferenceMementoRule();
+
 	private volatile boolean isDone;
 	private Display display;
 
-	/**
-	 * Create a new instance of the receiver.
-	 */
-	public ProgressReportingTest(String testName) {
-		super(testName);
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
+	@Before
+	public final void storeDisplay() throws Exception {
 		this.display = Display.getCurrent();
-		super.doSetUp();
 	}
 
 	private void setRunInBackground(boolean newRunInBackgroundSetting) {
-		setPreference(WorkbenchPlugin.getDefault().getPreferenceStore(), IPreferenceConstants.RUN_IN_BACKGROUND,
+		preferenceMemento.setPreference(WorkbenchPlugin.getDefault().getPreferenceStore(),
+				IPreferenceConstants.RUN_IN_BACKGROUND,
 				newRunInBackgroundSetting);
 	}
 
@@ -89,7 +95,6 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	 */
 	public void runAsyncTest(Runnable testContent) throws Exception {
 		final Display display = Display.getCurrent();
-		tagIfNecessary(getName(), Dimension.ELAPSED_PROCESS);
 		exercise(() -> {
 			startMeasuring();
 
@@ -122,6 +127,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the overhead of the test framework itself
 	 */
+	@Test
 	public void testJobNoMonitorUsage() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -140,6 +146,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of setTaskName
 	 */
+	@Test
 	public void testJobSetTaskName() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -160,6 +167,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of subTask
 	 */
+	@Test
 	public void testJobSubTask() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -180,6 +188,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of isCanceled
 	 */
+	@Test
 	public void testJobIsCanceled() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -202,6 +211,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.worked in jobs
 	 */
+	@Test
 	public void testJobWorked() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -225,6 +235,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	 * rate, this test should be no more than 15% slower than
 	 * {@link #testJobSubMonitorNewChild}.
 	 */
+	@Test
 	public void testJobSubMonitorSplit() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -245,6 +256,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of subMonitor.newChild()
 	 */
+	@Test
 	public void testJobSubMonitorNewChild() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -265,6 +277,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of subMonitor.worked()
 	 */
+	@Test
 	public void testJobSubMonitorWorked() throws Exception {
 		openTestWindow();
 		setRunInBackground(true);
@@ -285,6 +298,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.subTask in the progress service
 	 */
+	@Test
 	public void testRunInForegroundNoMonitorUsage() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		setRunInBackground(false);
@@ -306,6 +320,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.worked in the progress service
 	 */
+	@Test
 	public void testRunInForegroundWorked() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		setRunInBackground(false);
@@ -328,6 +343,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.setTaskName in the progress service
 	 */
+	@Test
 	public void testRunInForegroundSetTaskName() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		setRunInBackground(false);
@@ -350,6 +366,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.subTask in the progress service
 	 */
+	@Test
 	public void testRunInForegroundSubTask() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		setRunInBackground(false);
@@ -372,6 +389,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of monitor.subTask in the progress service
 	 */
+	@Test
 	public void testRunInForegroundIsCanceled() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		setRunInBackground(false);
@@ -397,6 +415,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	 * Test the cost of opening a progress monitor dialog without reporting any
 	 * progress
 	 */
+	@Test
 	public void testProgressMonitorDialogNoMonitorUsage() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
@@ -419,6 +438,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of calling worked() in a progress monitor dialog
 	 */
+	@Test
 	public void testProgressMonitorDialogWorked() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
@@ -442,6 +462,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of calling worked() in a progress monitor dialog
 	 */
+	@Test
 	public void testProgressMonitorDialogIsCanceled() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
@@ -467,6 +488,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of calling setTaskName in a progress monitor dialog.
 	 */
+	@Test
 	public void testProgressMonitorDialogSetTaskName() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {
@@ -490,6 +512,7 @@ public class ProgressReportingTest extends BasicPerformanceTest {
 	/**
 	 * Test the cost of calling subTask in a progress monitor dialog.
 	 */
+	@Test
 	public void testProgressMonitorDialogSubTask() throws Exception {
 		IWorkbenchWindow window = openTestWindow();
 		runAsyncTest(() -> {

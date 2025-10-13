@@ -13,6 +13,10 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.navigator;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEventsUntil;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,25 +36,22 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.NavigationHistoryAction;
 import org.eclipse.ui.intro.IIntroPart;
 import org.eclipse.ui.part.FileEditorInput;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.EditorTestHelper;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.UITestUtil.Condition;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 import org.eclipse.ui.texteditor.TextSelectionNavigationLocation;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * @since 3.3
  *
  */
-public class GoBackForwardsTest extends UITestCase {
-
-	private static final String TEST_NAME = "GoBackForwardsTest";
-
-	public GoBackForwardsTest() {
-		super(TEST_NAME);
-	}
+public class GoBackForwardsTest {
 
 	private static final String PROJECT_NAME = "GoBackForwardsTestProject";
 	private static final String FILE_NAME = "GoBackForwardsTestFile.java";
@@ -64,8 +65,11 @@ public class GoBackForwardsTest extends UITestCase {
 	private IProject project;
 	private IFile file;
 
-	@Override
-	public void doSetUp() throws CoreException, IOException {
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
+	@Before
+	public void setUp() throws CoreException, IOException {
 		project = FileUtil.createProject(PROJECT_NAME);
 		file = FileUtil.createFile(FILE_NAME, project);
 		StringBuilder stringBuilder = new StringBuilder();
@@ -76,7 +80,7 @@ public class GoBackForwardsTest extends UITestCase {
 	}
 
 	@Test
-	public void testNavigationHistoryNavigation() {
+	public void testNavigationHistoryNavigation() throws PartInitException {
 		IIntroPart introPart = PlatformUI.getWorkbench().getIntroManager().getIntro();
 		PlatformUI.getWorkbench().getIntroManager().closeIntro(introPart);
 
@@ -91,39 +95,33 @@ public class GoBackForwardsTest extends UITestCase {
 
 		openGenericEditor(editorInput);
 
-		if (!processEventsUntil(genericEditorNoSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(genericEditorNoSelection, 1000));
 
 		selectInGenericEditor(editorInput);
 
-		if (!processEventsUntil(genericEditorSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(genericEditorSelection, 1000));
 
 		openTextEditor(editorInput);
 
-		if (!processEventsUntil(textEditorNoSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(textEditorNoSelection, 1000));
 
 		selectInTextEditor(editorInput);
 
-		if (!processEventsUntil(textEditorSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(textEditorSelection, 1000));
 
 		openGenericEditor(editorInput);
 
-		if (!processEventsUntil(genericEditorSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(genericEditorSelection, 1000));
 
 		openTextEditor(editorInput);
 
-		if (!processEventsUntil(textEditorSelection, 1000)) {
-			fail("Timeout during navigation." + getStateDetails());
-		}
+		assertTrue("Timeout during navigation." + getStateDetails(),
+				processEventsUntil(textEditorSelection, 1000));
 
 		// Navigate backward from text editor to editor
 		goBackward(EditorTestHelper.getActiveWorkbenchWindow(), genericEditorSelection);
@@ -184,58 +182,38 @@ public class GoBackForwardsTest extends UITestCase {
 		};
 	}
 
-	private void openGenericEditor(IEditorInput editorInput) {
-		try {
-			EditorTestHelper.getActivePage().openEditor(editorInput, GENERIC_EDITOR_ID, true,
-					IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
-		} catch (PartInitException e) {
-			fail("Should not throw an exception");
-		}
+	private void openGenericEditor(IEditorInput editorInput) throws PartInitException {
+		EditorTestHelper.getActivePage().openEditor(editorInput, GENERIC_EDITOR_ID, true,
+				IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
 	}
 
-	private void selectInGenericEditor(IEditorInput editorInput) {
-		try {
-			AbstractTextEditor editor = (AbstractTextEditor) EditorTestHelper.getActivePage().openEditor(editorInput,
-					GENERIC_EDITOR_ID, true, IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
-			editor.selectAndReveal(10, 5);
-		} catch (PartInitException e) {
-			fail("Should not throw an exception");
-		}
+	private void selectInGenericEditor(IEditorInput editorInput) throws PartInitException {
+		AbstractTextEditor editor = (AbstractTextEditor) EditorTestHelper.getActivePage().openEditor(editorInput,
+				GENERIC_EDITOR_ID, true, IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
+		editor.selectAndReveal(10, 5);
 	}
 
-	private void selectInTextEditor(IEditorInput editorInput) {
-		try {
-			AbstractTextEditor editor = (AbstractTextEditor) EditorTestHelper.getActivePage().openEditor(editorInput,
-					TEXT_EDITOR_ID, true, IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
-			editor.selectAndReveal(10, 5);
-		} catch (PartInitException e) {
-			fail("Should not throw an exception");
-		}
+	private void selectInTextEditor(IEditorInput editorInput) throws PartInitException {
+		AbstractTextEditor editor = (AbstractTextEditor) EditorTestHelper.getActivePage().openEditor(editorInput,
+				TEXT_EDITOR_ID, true, IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
+		editor.selectAndReveal(10, 5);
 	}
 
-	private void openTextEditor(IEditorInput editorInput) {
-		try {
-			EditorTestHelper.getActivePage().openEditor(editorInput, TEXT_EDITOR_ID, true,
-					IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
-		} catch (PartInitException e) {
-			fail("Should not throw an exception");
-		}
+	private void openTextEditor(IEditorInput editorInput) throws PartInitException {
+		EditorTestHelper.getActivePage().openEditor(editorInput, TEXT_EDITOR_ID, true,
+				IWorkbenchPage.MATCH_ID | IWorkbenchPage.MATCH_INPUT);
 	}
 
 	private void goForward(IWorkbenchWindow window, Condition condition) {
 		NavigationHistoryAction action = new NavigationHistoryAction(window, true);
 		action.run();
-		if (!processEventsUntil(condition, 1000)) {
-			fail("Timeout during navigation.");
-		}
+		assertTrue("Timeout during navigation.", processEventsUntil(condition, 1000));
 	}
 
 	private void goBackward(IWorkbenchWindow window, Condition condition) {
 		NavigationHistoryAction action = new NavigationHistoryAction(window, false);
 		action.run();
-		if (!processEventsUntil(condition, 1000)) {
-			fail("Timeout during navigation.");
-		}
+		assertTrue("Timeout during navigation.", processEventsUntil(condition, 1000));
 	}
 
 	private String getActiveEditorId() {

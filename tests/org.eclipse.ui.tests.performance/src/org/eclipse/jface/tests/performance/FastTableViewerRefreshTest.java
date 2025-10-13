@@ -13,21 +13,17 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import org.eclipse.swt.widgets.TableItem;
+import org.junit.Test;
 
 public class FastTableViewerRefreshTest extends TableViewerRefreshTest {
-
-	public FastTableViewerRefreshTest(String testName, int tagging) {
-		super(testName, tagging);
-	}
-
-	public FastTableViewerRefreshTest(String testName) {
-		super(testName);
-	}
 
 	/**
 	 * Test the time for doing a refresh.
 	 */
+	@Test
 	public void testRefreshMultiple() throws Throwable {
 		openBrowser();
 
@@ -49,6 +45,7 @@ public class FastTableViewerRefreshTest extends TableViewerRefreshTest {
 	/**
 	 * Test the time for doing a refresh.
 	 */
+	@Test
 	public void testUpdateMultiple() throws Throwable {
 		openBrowser();
 

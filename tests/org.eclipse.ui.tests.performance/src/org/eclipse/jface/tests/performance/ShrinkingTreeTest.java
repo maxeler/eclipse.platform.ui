@@ -13,8 +13,10 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.test.performance.Dimension;
+import org.junit.Test;
 
 /**
  * ShrinkingTreeTest is a test to see how long it takes to refresh a tree that goes
@@ -23,23 +25,8 @@ import org.eclipse.test.performance.Dimension;
  */
 public class ShrinkingTreeTest extends TreeTest {
 
-
-	/**
-	 * Create a new instance of the receiver.
-	 */
-	public ShrinkingTreeTest(String testName) {
-		super(testName);
-	}
-
-	public ShrinkingTreeTest(String testName, int tagging) {
-		super(testName, tagging);
-	}
-
+	@Test
 	public void testTreeViewerRefresh() throws CoreException {
-
-		tagIfNecessary("JFace - Refresh from 1000 items to 100 items",
-				Dimension.ELAPSED_PROCESS);
-
 		openBrowser();
 //		int smallCount = 1;
 //		for (int i = 0; i < 3; i++) {

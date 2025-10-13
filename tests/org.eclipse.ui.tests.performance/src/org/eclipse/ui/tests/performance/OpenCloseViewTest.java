@@ -13,10 +13,20 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
+import java.util.Collection;
+
 import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 /**
  * Performance tests for showing views.
@@ -24,17 +34,25 @@ import org.eclipse.ui.IWorkbenchWindow;
  * and a more complex view (Resource Navigator).
  * The views are shown in an empty perspective.
  */
+@RunWith(Parameterized.class)
 public class OpenCloseViewTest extends BasicPerformanceTest {
+
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
+
+	@Parameters(name = "{index}: {0}")
+	public static Collection<Object[]> data() {
+		return ViewPerformanceUtil.getAllTestableViewIds().stream().map(id -> new Object[] { id }).toList();
+	}
 
 	private final String viewId;
 
-	public OpenCloseViewTest(String viewId, int tagging) {
-		super("showView:" + viewId, tagging);
+	public OpenCloseViewTest(String viewId) {
 		this.viewId = viewId;
 	}
 
-	@Override
-	protected void runTest() throws Throwable {
+	@Test
+	public void test() throws Throwable {
 		IWorkbenchWindow window = openTestWindow();
 		final IWorkbenchPage page = window.getActivePage();
 
@@ -44,9 +62,9 @@ public class OpenCloseViewTest extends BasicPerformanceTest {
 		waitForBackgroundJobs();
 		processEvents();
 
-		tagIfNecessary("UI - Open/Close " + view1.getTitle(), Dimension.ELAPSED_PROCESS);
-		if ("org.eclipse.ui.views.BookmarkView".equals(viewId))
-			setDegradationComment("The test results are influenced by the test machine setup. See bug 340136.");
+		if (viewId.equals(ViewPerformanceUtil.PROJECT_EXPLORER)) {
+			tagAsGlobalSummary("UI - Open/Close " + view1.getTitle(), Dimension.ELAPSED_PROCESS);
+		}
 
 		for (int j = 0; j < 100; j++) {
 

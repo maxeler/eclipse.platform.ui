@@ -14,8 +14,16 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.datatransfer;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
 import static org.eclipse.ui.tests.datatransfer.ImportTestUtils.restoreWorkspaceConfiguration;
 import static org.eclipse.ui.tests.datatransfer.ImportTestUtils.setWorkspaceAutoBuild;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEventsUntil;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.waitForJobs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.CharArrayReader;
 import java.io.CharArrayWriter;
@@ -61,47 +69,40 @@ import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.wizards.datatransfer.SmartImportRootWizardPage;
 import org.eclipse.ui.internal.wizards.datatransfer.SmartImportWizard;
 import org.eclipse.ui.tests.TestPlugin;
 import org.eclipse.ui.tests.datatransfer.contributions.ImportMeProjectConfigurator;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.12
  */
-@RunWith(JUnit4.class)
-public class SmartImportTests extends UITestCase {
+public class SmartImportTests {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindowsRule = new CloseTestWindowsRule();
 
 	private WizardDialog dialog;
 
-	public SmartImportTests() {
-		super(SmartImportTests.class.getName());
-	}
-
-	@Override
-	public void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		ImportMeProjectConfigurator.configuredProjects.clear();
 		clearAll();
 		setWorkspaceAutoBuild(true);
 	}
 
-	@Override
-	public void doTearDown() throws Exception {
+	@After
+	public final void tearDown() throws Exception {
 		ImportMeProjectConfigurator.configuredProjects.clear();
-		try {
-			clearAll();
-			restoreWorkspaceConfiguration();
-		} finally {
-			super.doTearDown();
-		}
+		clearAll();
+		restoreWorkspaceConfiguration();
 	}
 
 	private void clearAll() throws CoreException, IOException {
@@ -387,7 +388,7 @@ public class SmartImportTests extends UITestCase {
 
 	@Test
 	public void testInitialWorkingSets() throws Exception {
-		IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 		IWorkingSet workingSet = workingSetManager.createWorkingSet("testWorkingSet", new IAdaptable[0]);
 		workingSet.setId("org.eclipse.ui.resourceWorkingSetPage");
 		workingSetManager.addWorkingSet(workingSet);
@@ -410,7 +411,7 @@ public class SmartImportTests extends UITestCase {
 
 	@Test
 	public void testChangedWorkingSets() throws Exception {
-		IWorkingSetManager workingSetManager = PlatformUI.getWorkbench().getWorkingSetManager();
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 		IWorkingSet workingSet = workingSetManager.createWorkingSet("testWorkingSet", new IAdaptable[0]);
 		workingSet.setId("org.eclipse.ui.resourceWorkingSetPage");
 		workingSetManager.addWorkingSet(workingSet);

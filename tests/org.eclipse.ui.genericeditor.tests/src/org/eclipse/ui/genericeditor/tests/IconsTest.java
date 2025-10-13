@@ -1,5 +1,5 @@
 /********************************************************************************
- * Copyright (c) 2019 Lakshminarayana Nekkanti(narayana.nekkanti@gmail.com)
+ * Copyright (c) 2019, 2025 Lakshminarayana Nekkanti(narayana.nekkanti@gmail.com)
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -12,12 +12,13 @@
  ********************************************************************************/
 package org.eclipse.ui.genericeditor.tests;
 
-import static org.junit.Assert.assertEquals;
+import static org.eclipse.ui.tests.harness.util.DisplayHelper.runEventLoop;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
@@ -25,6 +26,7 @@ import org.eclipse.core.runtime.content.IContentType;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -33,7 +35,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.internal.genericeditor.GenericEditorPlugin;
 import org.eclipse.ui.part.FileEditorInput;
-import org.eclipse.ui.tests.harness.util.UITestCase;
 
 public class IconsTest extends AbstratGenericEditorTest {
 
@@ -50,7 +51,7 @@ public class IconsTest extends AbstratGenericEditorTest {
 		testProject.open(null);
 
 		testFile= testProject.getFile("foobar.txt");
-		testFile.create(new ByteArrayInputStream("Testing file".getBytes()), true, null);
+		testFile.create("Testing file".getBytes(), IResource.FORCE, null);
 
 		genericEditor= (ExtensionBasedTextEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().openEditor(new FileEditorInput(testFile), "org.eclipse.ui.genericeditor.GenericEditor");
@@ -71,7 +72,7 @@ public class IconsTest extends AbstratGenericEditorTest {
 		testProject.open(null);
 
 		testFile= testProject.getFile("foo.txt");
-		testFile.create(new ByteArrayInputStream("Testing file".getBytes()), true, null);
+		testFile.create("Testing file".getBytes(), IResource.FORCE, null);
 
 		genericEditor= (ExtensionBasedTextEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().openEditor(new FileEditorInput(testFile), "org.eclipse.ui.genericeditor.GenericEditor");
@@ -86,11 +87,12 @@ public class IconsTest extends AbstratGenericEditorTest {
 	}
 
 	@Override
+	@AfterEach
 	public void tearDown() throws Exception {
 		if (genericEditor != null) {
 			genericEditor.close(false);
 			genericEditor= null;
-			UITestCase.processEvents();
+			runEventLoop(PlatformUI.getWorkbench().getDisplay(),0);
 		}
 		if (testFile != null) {
 			testFile.delete(true, new NullProgressMonitor());

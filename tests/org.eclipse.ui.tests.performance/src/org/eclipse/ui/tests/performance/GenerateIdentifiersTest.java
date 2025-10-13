@@ -14,7 +14,10 @@
 
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+
 import org.eclipse.ui.activities.IActivityManager;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /**
@@ -22,15 +25,14 @@ import org.junit.Test;
  */
 public class GenerateIdentifiersTest extends BasicPerformanceTest {
 
-	private static final int count = 10000;
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
 
-	public GenerateIdentifiersTest() {
-		super("Generate " + count + " identifiers");
-	}
+	private static final int count = 10000;
 
 	@Test
 	public void test() throws Throwable {
-		final IActivityManager activityManager = fWorkbench.getActivitySupport().getActivityManager();
+		final IActivityManager activityManager = getWorkbench().getActivitySupport().getActivityManager();
 
 		exercise(() -> {
 			// construct the Identifiers to test

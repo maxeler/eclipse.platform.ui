@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Red Hat Inc. and others
+ * Copyright (c) 2016, 2025 Red Hat Inc. and others
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,22 +13,22 @@
  *******************************************************************************/
 package org.eclipse.ui.genericeditor.tests;
 
-import java.io.ByteArrayInputStream;
+import static org.eclipse.ui.tests.harness.util.DisplayHelper.runEventLoop;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.forceActive;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.waitForJobs;
+
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-
-import org.eclipse.text.tests.Accessor;
-
-import org.eclipse.jface.text.source.SourceViewer;
 
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -36,9 +36,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.genericeditor.ExtensionBasedTextEditor;
 import org.eclipse.ui.intro.IIntroPart;
 import org.eclipse.ui.part.FileEditorInput;
-import org.eclipse.ui.tests.harness.util.UITestCase;
-
-import org.eclipse.ui.texteditor.AbstractTextEditor;
 
 /**
  * Closes intro, create {@link #project}, create {@link #file} and open {@link #editor}; and clean up.
@@ -56,16 +53,16 @@ public class AbstratGenericEditorTest {
 	 * Closes intro, create {@link #project}, create {@link #file} and open {@link #editor}
 	 * @throws Exception ex
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		closeIntro();
 		project = ResourcesPlugin.getWorkspace().getRoot().getProject(getClass().getName() + System.currentTimeMillis());
 		project.create(null);
 		project.open(null);
 		project.setDefaultCharset(StandardCharsets.UTF_8.name(), null);
-		UITestCase.waitForJobs(100, 5000);
+		waitForJobs(100, 5000);
 		window= PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		UITestCase.forceActive(window.getShell());
+		forceActive(window.getShell());
 		createAndOpenFile();
 	 }
 
@@ -93,11 +90,11 @@ public class AbstratGenericEditorTest {
 	 */
 	protected void createAndOpenFile(String name, String contents, Supplier<? extends IEditorInput> inputCreator) throws Exception {
 		this.file = project.getFile(name);
-		this.file.create(new ByteArrayInputStream(contents.getBytes(StandardCharsets.UTF_8)), true, null);
+		this.file.create(contents.getBytes(StandardCharsets.UTF_8), IResource.FORCE, null);
 		this.file.setCharset(StandardCharsets.UTF_8.name(), null);
 		this.editor = (ExtensionBasedTextEditor) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().openEditor(inputCreator.get(), "org.eclipse.ui.genericeditor.GenericEditor");
-		UITestCase.processEvents();
+		runEventLoop(PlatformUI.getWorkbench().getDisplay(),0);
 	}
 
 	/**
@@ -110,19 +107,14 @@ public class AbstratGenericEditorTest {
 			editor.close(false);
 			editor = null;
 		}
-		UITestCase.processEvents();
+		runEventLoop(PlatformUI.getWorkbench().getDisplay(),0);
 		if (file != null) {
 			file.delete(true, new NullProgressMonitor());
 			file = null;
 		}
 	}
 
-	protected SourceViewer getSourceViewer() {
-		SourceViewer sourceViewer= (SourceViewer) new Accessor(editor, AbstractTextEditor.class).invoke("getSourceViewer", new Object[0]);
-		return sourceViewer;
-	}
-
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		cleanFileAndEditor();
 		if (project != null) {
@@ -134,15 +126,7 @@ public class AbstratGenericEditorTest {
 		IIntroPart intro = PlatformUI.getWorkbench().getIntroManager().getIntro();
 		if (intro != null) {
 			PlatformUI.getWorkbench().getIntroManager().closeIntro(intro);
-			UITestCase.processEvents();
-		}
-	}
-
-	public static void waitAndDispatch(long milliseconds) {
-		long timeout = milliseconds; //ms
-		long start = System.currentTimeMillis();
-		while (start + timeout > System.currentTimeMillis()) {
-			UITestCase.processEvents();
+			runEventLoop(PlatformUI.getWorkbench().getDisplay(),0);
 		}
 	}
 

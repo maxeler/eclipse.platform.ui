@@ -15,6 +15,10 @@
 
 package org.eclipse.ui.tests.commands;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +30,9 @@ import org.eclipse.core.commands.Parameterization;
 import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.commands.IElementReference;
 import org.eclipse.ui.commands.IElementUpdater;
@@ -35,16 +41,19 @@ import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.menus.UIElement;
 import org.eclipse.ui.services.IServiceLocator;
 import org.eclipse.ui.services.IServiceScopes;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.3
  */
-@RunWith(JUnit4.class)
-public class CommandCallbackTest extends UITestCase {
+public class CommandCallbackTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindowsRule = new CloseTestWindowsRule();
 
 	private static final String HOST_PARAM_ID = "host";
 	private static final String PROT_PARAM_ID = "protocol";
@@ -52,6 +61,7 @@ public class CommandCallbackTest extends UITestCase {
 	private static final String CMD1_ID = PREFIX + "cmd1";
 	private static final String CMD2_ID = PREFIX + "cmd2";
 
+	private IWorkbench workbench;
 	private ICommandService commandService;
 	private Command cmd1;
 	private Command cmd2;
@@ -61,27 +71,21 @@ public class CommandCallbackTest extends UITestCase {
 	private CallbackHandler cmd1Handler;
 	private CallbackHandler cmd2Handler;
 
-	public CommandCallbackTest() {
-		super(CommandCallbackTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-		commandService = fWorkbench
-				.getService(ICommandService.class);
+	@Before
+	public final void setUp() throws Exception {
+		workbench = PlatformUI.getWorkbench();
+		commandService = workbench.getService(ICommandService.class);
 		cmd1 = commandService.getCommand(CMD1_ID);
 		cmd2 = commandService.getCommand(CMD2_ID);
-		handlerService = fWorkbench
-				.getService(IHandlerService.class);
+		handlerService = workbench.getService(IHandlerService.class);
 		cmd1Handler = new CallbackHandler();
 		cmd1Activation = handlerService.activateHandler(CMD1_ID, cmd1Handler);
 		cmd2Handler = new CallbackHandler();
 		cmd2Activation = handlerService.activateHandler(CMD2_ID, cmd2Handler);
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
+	@After
+	public final void tearDown() throws Exception {
 		if (cmd1Activation != null) {
 			handlerService.deactivateHandler(cmd1Activation);
 			cmd1Activation = null;
@@ -90,7 +94,7 @@ public class CommandCallbackTest extends UITestCase {
 			handlerService.deactivateHandler(cmd2Activation);
 			cmd2Activation = null;
 		}
-		super.doTearDown();
+		workbench = null;
 	}
 
 	private static class CallbackHandler extends AbstractHandler implements
@@ -156,16 +160,8 @@ public class CommandCallbackTest extends UITestCase {
 	public void testNoParametersNoCallbacks() throws Exception {
 		ParameterizedCommand pc1 = new ParameterizedCommand(cmd1, null);
 		ParameterizedCommand pc2 = new ParameterizedCommand(cmd1, null);
-		try {
-			commandService.registerElementForCommand(pc1, null);
-			fail("Callback should not register");
-		} catch (NotDefinedException e) {
-		}
-		try {
-			commandService.registerElementForCommand(pc2, null);
-			fail("Callback 2 should not register");
-		} catch (NotDefinedException e) {
-		}
+		assertThrows(NotDefinedException.class, () -> commandService.registerElementForCommand(pc1, null));
+		assertThrows(NotDefinedException.class, () -> commandService.registerElementForCommand(pc2, null));
 
 		commandService.refreshElements(CMD1_ID + ".1", null);
 		assertEquals(0, cmd1Handler.callbacks);
@@ -180,9 +176,9 @@ public class CommandCallbackTest extends UITestCase {
 		ParameterizedCommand pc2 = new ParameterizedCommand(cmd1, null);
 
 		IElementReference cr1 = commandService.registerElementForCommand(pc1,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr2 = commandService.registerElementForCommand(pc2,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 
 		try {
 			assertEquals(2, cmd1Handler.callbacks);
@@ -213,9 +209,9 @@ public class CommandCallbackTest extends UITestCase {
 						new Parameterization(parmProt, "http"),
 						new Parameterization(parmHost, "download.eclipse.org") });
 		IElementReference cr1 = commandService.registerElementForCommand(pc1,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr2 = commandService.registerElementForCommand(pc2,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		try {
 
 			assertEquals(2, cmd2Handler.callbacks);
@@ -261,11 +257,11 @@ public class CommandCallbackTest extends UITestCase {
 						new Parameterization(parmProt, "http"),
 						new Parameterization(parmHost, "download.eclipse.org") });
 		IElementReference cr1 = commandService.registerElementForCommand(pc1,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr2 = commandService.registerElementForCommand(pc2,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr3 = commandService.registerElementForCommand(pc3,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		try {
 
 			assertEquals(3, cmd2Handler.callbacks);
@@ -323,15 +319,15 @@ public class CommandCallbackTest extends UITestCase {
 				new Parameterization[] { new Parameterization(parmProt, "ftp"),
 						new Parameterization(parmHost, "download.eclipse.org") });
 		IElementReference cr1 = commandService.registerElementForCommand(pc1,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr2 = commandService.registerElementForCommand(pc2,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr3 = commandService.registerElementForCommand(pc3,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr4 = commandService.registerElementForCommand(pc4,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		IElementReference cr5 = commandService.registerElementForCommand(pc5,
-				new MyElement(fWorkbench));
+				new MyElement(workbench));
 		try {
 			assertEquals(5, cmd2Handler.callbacks);
 			Map<String, String> filter = new HashMap<>();
@@ -420,7 +416,7 @@ public class CommandCallbackTest extends UITestCase {
 		try {
 			assertEquals(2, cmd1Handler.callbacks);
 			cmd1Handler.callbacks = 0;
-			closeAllTestWindows();
+			window.close();
 			commandService.refreshElements(CMD1_ID, null);
 			assertEquals(1, cmd1Handler.callbacks);
 		} finally {

@@ -13,12 +13,17 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.eclipse.ui.tests.performance.UIPerformanceTestRule.getTestProject;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.IPerspectiveDescriptor;
 import org.eclipse.ui.IPerspectiveRegistry;
 import org.eclipse.ui.IWorkbenchPage;
@@ -26,6 +31,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.WorkbenchPlugin;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,11 +43,14 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class PerspectiveSwitchTest extends BasicPerformanceTest {
 
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
+
 	private final String id1;
 	private final String id2;
 	private final String activeEditor;
 
-	@Parameters
+	@Parameters(name = "{index}: {0}, {1}, editor {2}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] { // Test switching between the two most commonly used perspectives in the
 												// SDK
@@ -49,7 +58,7 @@ public class PerspectiveSwitchTest extends BasicPerformanceTest {
 				// perspective switch test, but it is easily affected by changes in JDT, etc.)
 				{ "org.eclipse.jdt.ui.JavaPerspective", "org.eclipse.debug.ui.DebugPerspective", "1.java" },
 
-				{ UIPerformanceTestSetup.PERSPECTIVE1, UIPerformanceTestSetup.PERSPECTIVE2, "1.perf_basic" },
+				{ UIPerformanceTestRule.PERSPECTIVE1, UIPerformanceTestRule.PERSPECTIVE2, "1.perf_basic" },
 
 				// Test switching between a perspective with lots of actions and a perspective
 				// with none
@@ -59,7 +68,6 @@ public class PerspectiveSwitchTest extends BasicPerformanceTest {
 	}
 
 	public PerspectiveSwitchTest(String id1, String id2, String activeEditor) {
-		super("testPerspectiveSwitch:" + id1 + "," + id2 + ",editor " + activeEditor, BasicPerformanceTest.NONE);
 		this.id1 = id1;
 		this.id2 = id2;
 		this.activeEditor = activeEditor;
@@ -98,12 +106,10 @@ public class PerspectiveSwitchTest extends BasicPerformanceTest {
 
 		// IFile aFile = getProject().getFile("1." +
 		// EditorPerformanceSuite.EDITOR_FILE_EXTENSIONS[0]);
-		IFile aFile = getProject().getFile(activeEditor);
+		IFile aFile = getTestProject().getFile(activeEditor);
 		assertTrue(aFile.exists());
 
 		IDE.openEditor(page, aFile, true);
-
-		tagIfNecessary("UI - Perspective Switch", Dimension.ELAPSED_PROCESS);
 
 		exercise(() -> {
 			processEvents();

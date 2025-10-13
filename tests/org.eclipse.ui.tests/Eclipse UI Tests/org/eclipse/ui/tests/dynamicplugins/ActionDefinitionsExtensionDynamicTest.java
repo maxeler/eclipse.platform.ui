@@ -13,13 +13,14 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.dynamicplugins;
 
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import org.eclipse.core.commands.common.NamedHandleObject;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Tests whether the "org.eclipse.ui.actionDefinitions" extension point can be
@@ -27,17 +28,8 @@ import org.junit.runners.JUnit4;
  *
  * @since 3.1.1
  */
-@RunWith(JUnit4.class)
 public final class ActionDefinitionsExtensionDynamicTest extends
 		DynamicTestCase {
-
-	/**
-	 * Constructs a new instance of
-	 * <code>ActionDefinitionsExtensionDynamicTest</code>.
-	 */
-	public ActionDefinitionsExtensionDynamicTest() {
-		super(ActionDefinitionsExtensionDynamicTest.class.getSimpleName());
-	}
 
 	/**
 	 * Returns the full-qualified identifier of the extension to be tested.
@@ -72,40 +64,27 @@ public final class ActionDefinitionsExtensionDynamicTest extends
 
 	/**
 	 * Tests whether the items defined in the extension point can be added and
-	 * removed dynamically. It tests that the data doesn't exist, and then loads
-	 * the extension. It tests that the data then exists, and unloads the
-	 * extension. It tests that the data then doesn't exist.
+	 * removed dynamically. It tests that the data doesn't exist, and then loads the
+	 * extension. It tests that the data then exists, and unloads the extension. It
+	 * tests that the data then doesn't exist.
+	 *
+	 * @throws NotDefinedException
 	 */
 	@Test
-	public final void testActionDefinitions() {
+	public final void testActionDefinitions() throws NotDefinedException {
 		final ICommandService service = getWorkbench().getAdapter(ICommandService.class);
-		NamedHandleObject namedHandleObject;
 
-		namedHandleObject = service.getCommand("monkey");
-		try {
-			namedHandleObject.getName();
-			fail();
-		} catch (final NotDefinedException e) {
-			assertTrue(true);
-		}
+		NamedHandleObject namedHandleObject1 = service.getCommand("monkey");
+		assertThrows(NotDefinedException.class, () -> namedHandleObject1.getName());
 
 		getBundle();
 
-		namedHandleObject = service.getCommand("monkey");
-		try {
-			assertTrue("Monkey".equals(namedHandleObject.getName()));
-		} catch (final NotDefinedException e) {
-			fail();
-		}
+		NamedHandleObject namedHandleObject2 = service.getCommand("monkey");
+		assertTrue("Monkey".equals(namedHandleObject2.getName()));
 
 		removeBundle();
 
-		namedHandleObject = service.getCommand("monkey");
-		try {
-			namedHandleObject.getName();
-			fail();
-		} catch (final NotDefinedException e) {
-			assertTrue(true);
-		}
+		NamedHandleObject namedHandleObject3 = service.getCommand("monkey");
+		assertThrows(NotDefinedException.class, () -> namedHandleObject3.getName());
 	}
 }

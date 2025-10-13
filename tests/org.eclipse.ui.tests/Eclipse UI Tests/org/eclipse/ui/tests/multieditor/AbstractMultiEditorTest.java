@@ -13,6 +13,7 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.multieditor;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -48,14 +49,10 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.part.MultiEditorInput;
 import org.eclipse.ui.tests.TestPlugin;
 import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
-import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
 public class AbstractMultiEditorTest {
 
 	@Rule
@@ -78,7 +75,7 @@ public class AbstractMultiEditorTest {
 	public void testBug317102() throws Throwable {
 		final String[] simpleFiles = { TEST01_TXT, TEST03_ETEST };
 
-		IWorkbenchWindow window = UITestCase.openTestWindow();
+		IWorkbenchWindow window = openTestWindow();
 		WorkbenchPage page = (WorkbenchPage) window.getActivePage();
 
 		IProject testProject = findOrCreateProject(PROJECT_NAME);

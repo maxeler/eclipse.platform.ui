@@ -13,6 +13,11 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.dynamicplugins;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
@@ -26,28 +31,22 @@ import org.eclipse.ui.internal.intro.IntroDescriptor;
 import org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants;
 import org.eclipse.ui.intro.IIntroPart;
 import org.eclipse.ui.tests.leaks.LeakTests;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.1
  */
-@RunWith(JUnit4.class)
 public class IntroTests extends DynamicTestCase {
 
 	private static final String PRODUCT_ID = "org.eclipse.ui.tests.someProduct";
 	private static final String INTRO_ID = "org.eclipse.newIntro1.newIntro1";
 	private IntroDescriptor oldDesc;
 	private IWorkbenchWindow window;
-	
-
-	public IntroTests() {
-		super(IntroTests.class.getSimpleName());
-	}
 
 	@Test
-	public void testIntroClosure() {
+	public void testIntroClosure() throws IllegalArgumentException, InterruptedException {
 		getBundle();
 		Workbench workbench = Workbench.getInstance();
 		IntroDescriptor testDesc = (IntroDescriptor) WorkbenchPlugin
@@ -61,16 +60,13 @@ public class IntroTests extends DynamicTestCase {
 		assertNotNull(intro);
 		intro = null; //null the reference
 		removeBundle();
-		try {
-			LeakTests.checkRef(queue, ref);
-		} catch (Exception e) {
-			fail(e.getMessage());
-		}
+		LeakTests.checkRef(queue, ref);
+
 		assertNull(workbench.getIntroManager().getIntro());
 	}
 
 	@Test
-	public void testIntroProperties() {
+	public void testIntroProperties() throws CoreException {
 		IIntroRegistry registry = WorkbenchPlugin.getDefault().getIntroRegistry();
 		assertNull(registry.getIntroForProduct(PRODUCT_ID));
 		assertNull(registry.getIntro(INTRO_ID));
@@ -78,24 +74,11 @@ public class IntroTests extends DynamicTestCase {
 		assertNotNull(registry.getIntroForProduct(PRODUCT_ID));
 		IIntroDescriptor desc = registry.getIntro(INTRO_ID);
 		assertNotNull(desc);
-		try {
-			testIntroProperties(desc);
-		}
-		catch (CoreException e) {
-			fail(e.getMessage());
-		}
+		testIntroProperties(desc);
 		removeBundle();
 		assertNull(registry.getIntro(INTRO_ID));
 		assertNull(registry.getIntroForProduct(PRODUCT_ID));
-		try {
-			testIntroProperties(desc);
-			fail();
-		}
-		catch (CoreException e) {
-			fail(e.getMessage());
-		}
-		catch (RuntimeException e) {
-		}
+		assertThrows(RuntimeException.class, () -> testIntroProperties(desc));
 	}
 
 	private void testIntroProperties(IIntroDescriptor desc) throws CoreException {
@@ -124,16 +107,14 @@ public class IntroTests extends DynamicTestCase {
 		return "data/org.eclipse.newIntro1";
 	}
 
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		oldDesc = Workbench.getInstance().getIntroDescriptor();
 		window = openTestWindow();
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
+	@After
+	public final void restoreIntroDescriptor() throws Exception {
 		Workbench.getInstance().setIntroDescriptor(oldDesc);
 	}
 

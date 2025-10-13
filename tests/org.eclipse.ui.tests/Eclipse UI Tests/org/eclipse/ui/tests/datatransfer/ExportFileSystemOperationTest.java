@@ -13,6 +13,10 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.datatransfer;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.net.URI;
@@ -36,16 +40,22 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.tests.harness.FileSystemHelper;
 import org.eclipse.ui.dialogs.IOverwriteQuery;
 import org.eclipse.ui.internal.wizards.datatransfer.FileSystemExportOperation;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.eclipse.ui.tests.internal.VirtualTestFileSystem;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.rules.TestName;
 
-@RunWith(JUnit4.class)
-public class ExportFileSystemOperationTest extends UITestCase implements
-		IOverwriteQuery {
+public class ExportFileSystemOperationTest implements IOverwriteQuery {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindowsRule = new CloseTestWindowsRule();
+
+	@Rule
+	public final TestName testName = new TestName();
 
 	private static final String[] directoryNames = { "dir1", "dir2" };
 
@@ -55,51 +65,36 @@ public class ExportFileSystemOperationTest extends UITestCase implements
 
 	private IProject project;
 
-	public ExportFileSystemOperationTest() {
-		super(ExportFileSystemOperationTest.class.getSimpleName());
-	}
-
 	@Override
 	public String queryOverwrite(String pathString) {
 		return "";
 	}
 
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-		project = FileUtil.createProject("Export" + getName());
+	@Before
+	public final void setUp() throws Exception {
+		project = FileUtil.createProject("Export" + testName.getMethodName());
 		File destination =
 			new File(FileSystemHelper.getRandomLocation(FileSystemHelper.getTempDir())
 				.toOSString());
 		localDirectory = destination.getAbsolutePath();
-		if (!destination.mkdirs()) {
-			fail("Could not set up destination directory for " + getName());
-		}
+		assertTrue(destination.mkdirs());
 		setUpData();
 	}
 
-	private void setUpData(){
-		try{
-			for (String directoryName : directoryNames) {
-				IFolder folder = project.getFolder(directoryName);
-				folder.create(false, true, new NullProgressMonitor());
-				for (String fileName : fileNames) {
-					IFile file = folder.getFile(fileName);
-					String contents =
-						directoryName + ", " + fileName;
-					file.create(new ByteArrayInputStream(contents.getBytes()),
-						true, new NullProgressMonitor());
-				}
+	private void setUpData() throws CoreException {
+		for (String directoryName : directoryNames) {
+			IFolder folder = project.getFolder(directoryName);
+			folder.create(false, true, new NullProgressMonitor());
+			for (String fileName : fileNames) {
+				IFile file = folder.getFile(fileName);
+				String contents = directoryName + ", " + fileName;
+				file.create(new ByteArrayInputStream(contents.getBytes()), true, new NullProgressMonitor());
 			}
-		}
-		catch(Exception e){
-			fail(e.toString());
 		}
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
+	@After
+	public final void tearDown() throws Exception {
 		// delete exported data
 		File root = new File(localDirectory);
 		if (root.exists()){
@@ -107,10 +102,7 @@ public class ExportFileSystemOperationTest extends UITestCase implements
 		}
 		try {
 			project.delete(true, true, null);
-		} catch (CoreException e) {
-			fail(e.toString());
-		}
-		finally{
+		} finally {
 			project = null;
 			localDirectory = null;
 		}

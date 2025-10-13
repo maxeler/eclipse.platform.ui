@@ -14,6 +14,16 @@
 
 package org.eclipse.ui.tests.propertysheet;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import java.util.HashMap;
 
 import org.eclipse.core.commands.Command;
@@ -37,25 +47,18 @@ import org.eclipse.ui.part.ShowInContext;
 import org.eclipse.ui.tests.SelectionProviderView;
 import org.eclipse.ui.views.properties.PropertySheet;
 import org.eclipse.ui.views.properties.PropertyShowInContext;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.5
  */
-@RunWith(JUnit4.class)
 public class NewPropertySheetHandlerTest extends AbstractPropertySheetTest {
 
 	private TestNewPropertySheetHandler testNewPropertySheetHandler;
 
-	public NewPropertySheetHandlerTest() {
-		super(NewPropertySheetHandlerTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public void setUp() throws Exception {
 		testNewPropertySheetHandler = new TestNewPropertySheetHandler();
 	}
 
@@ -153,7 +156,7 @@ public class NewPropertySheetHandlerTest extends AbstractPropertySheetTest {
 	}
 
 	void hideAndAssertNoParts() {
-		IWorkbenchWindow[] windows = fWorkbench.getWorkbenchWindows();
+		IWorkbenchWindow[] windows = getWorkbench().getWorkbenchWindows();
 		for (IWorkbenchWindow w : windows) {
 			IWorkbenchPage ap = w.getActivePage();
 			hideAndAssertNoParts(ap);
@@ -179,12 +182,7 @@ public class NewPropertySheetHandlerTest extends AbstractPropertySheetTest {
 	public final void testGetShowInContextWithNoActivePart() {
 		hideAndAssertNoParts();
 
-		try {
-			testNewPropertySheetHandler.getShowInContext(getExecutionEvent());
-		} catch (ExecutionException e) {
-			return;
-		}
-		fail("Expected ExecutionException due to no active part");
+		assertThrows(ExecutionException.class, () -> testNewPropertySheetHandler.getShowInContext(getExecutionEvent()));
 	}
 
 	/**
@@ -193,17 +191,11 @@ public class NewPropertySheetHandlerTest extends AbstractPropertySheetTest {
 	 * .
 	 */
 	@Test
-	public final void testFindPropertySheetWithoutActivePart()
-			throws PartInitException {
+	public final void testFindPropertySheetWithoutActivePart() {
 		hideAndAssertNoParts();
 
-		try {
-			testNewPropertySheetHandler.findPropertySheet(getExecutionEvent(),
-					new PropertyShowInContext(null, StructuredSelection.EMPTY));
-		} catch (ExecutionException e) {
-			return;
-		}
-		fail("Expected ExecutionException due to no active part");
+		assertThrows(ExecutionException.class, () -> testNewPropertySheetHandler.findPropertySheet(getExecutionEvent(),
+				new PropertyShowInContext(null, StructuredSelection.EMPTY)));
 	}
 
 	/**
@@ -214,7 +206,7 @@ public class NewPropertySheetHandlerTest extends AbstractPropertySheetTest {
 	@Test
 	public final void testFindPropertySheetWithOtherSheetActive()
 			throws PartInitException, ExecutionException {
-		propertySheet = (PropertySheet) activePage
+		PropertySheet propertySheet = (PropertySheet) activePage
 				.showView(IPageLayout.ID_PROP_SHEET);
 		assertTrue(countPropertySheetViews() == 1);
 

@@ -14,6 +14,8 @@
 
 package org.eclipse.ui.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -44,6 +46,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,6 +61,9 @@ import org.junit.runners.Parameterized.Parameters;
  */
 @RunWith(Parameterized.class)
 public class LabelProviderTest extends BasicPerformanceTest {
+
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
 
 	private static class CountryEntry {
 		private final String name;
@@ -171,7 +179,6 @@ public class LabelProviderTest extends BasicPerformanceTest {
 	 * @param colors Run test with color on or off
 	 */
 	public LabelProviderTest(boolean styled, boolean colors) {
-		super("DecoratingLabelProviderStyled[" + styled + "]Colors[" + colors + "]");
 		this.styled = styled;
 		this.colors = colors;
 	}
@@ -239,10 +246,8 @@ public class LabelProviderTest extends BasicPerformanceTest {
 		return viewer;
 	}
 
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-
+	@Before
+	public final void prepareShellUp() throws Exception {
 		Display display = Display.getCurrent();
 		if (display == null)
 			display = new Display();
@@ -261,9 +266,8 @@ public class LabelProviderTest extends BasicPerformanceTest {
 		fShell.open();
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
+	@After
+	public final void closeShell() throws Exception {
 		if (fShell != null) {
 			fShell.close();
 			fShell = null;

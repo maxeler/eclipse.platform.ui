@@ -14,65 +14,42 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.themes;
 
-import java.util.Arrays;
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.junit.Assert.assertNotNull;
 
 import org.eclipse.e4.ui.css.swt.theme.IThemeEngine;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
+import org.junit.Before;
+import org.junit.Rule;
 
 /**
  * @since 3.0
  */
-public abstract class ThemeTest extends UITestCase {
+public abstract class ThemeTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
 	private static final String MOCK_CSS_THEME = "org.eclipse.e4.ui.css.theme.mock";
 
 	protected static final String BOGUSID = "BOGUSID";
 
 	protected static final String THEME1 = "theme1";
 
-	public static void assertArrayEquals(Object[] datas, Object[] datas2) {
-		if (!Arrays.equals(datas, datas2)) {
-			String expected = formatArray(datas);
-			String actual = formatArray(datas2);
-			fail("expected:<" + expected + "> but was:<" + actual + ">");
-		}
-	}
-
-	protected static String formatArray(Object[] datas) {
-		StringBuilder buffer = new StringBuilder();
-		if (datas == null) {
-			buffer.append("null");
-		} else {
-			buffer.append('[');
-			for (int i = 0; i < datas.length; i++) {
-				buffer.append(datas[i]);
-				if (i != datas.length - 1) {
-					buffer.append(',');
-				}
-			}
-		}
-		return buffer.toString();
-	}
-
 	protected IThemeManager fManager;
 
-	public ThemeTest(String testName) {
-		super(testName);
-		// TODO Auto-generated constructor stub
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-		fManager = fWorkbench.getThemeManager();
+	@Before
+	public final void setUp() throws Exception {
+		fManager = getWorkbench().getThemeManager();
 		fManager.setCurrentTheme(IThemeManager.DEFAULT_THEME);
 
 		mockCSSTheme();
 	}
 
 	private void mockCSSTheme() {
-		IThemeEngine themeEngine = fWorkbench.getService(IThemeEngine.class);
+		IThemeEngine themeEngine = getWorkbench().getService(IThemeEngine.class);
 		org.eclipse.e4.ui.css.swt.theme.ITheme currentTheme = themeEngine.getActiveTheme();
 		if (currentTheme != null && !MOCK_CSS_THEME.equals(currentTheme.getId())) {
 			themeEngine.setTheme(MOCK_CSS_THEME, false);

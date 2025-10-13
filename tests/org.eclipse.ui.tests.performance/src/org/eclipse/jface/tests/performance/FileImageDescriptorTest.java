@@ -14,7 +14,8 @@
 
 package org.eclipse.jface.tests.performance;
 
-import java.io.IOException;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -25,6 +26,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
+import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 
@@ -36,19 +38,10 @@ public class FileImageDescriptorTest extends BasicPerformanceTest {
 
 	protected static final String IMAGES_DIRECTORY = "/icons/imagetests";
 
-	public FileImageDescriptorTest(String testName, int tagging) {
-		super(testName, tagging);
-
-	}
-
-	public FileImageDescriptorTest(String testName) {
-		super(testName);
-
-	}
-
 	/**
 	 * Test the time for doing a refresh.
 	 */
+	@Test
 	public void testRefresh() throws Throwable {
 
 		exercise(() -> {
@@ -70,12 +63,7 @@ public class FileImageDescriptorTest extends BasicPerformanceTest {
 
 				for (URL file : files) {
 					startMeasuring();
-					try {
-						descriptor = ImageDescriptor.createFromFile(missing, FileLocator.toFileURL(file).getFile());
-					} catch (IOException e) {
-						fail(e.getLocalizedMessage(), e);
-						continue;
-					}
+					descriptor = ImageDescriptor.createFromFile(missing, FileLocator.toFileURL(file).getFile());
 
 					for (int j = 0; j < 10; j++) {
 						Image image = descriptor.createImage();

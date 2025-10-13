@@ -15,6 +15,11 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.leaks;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -39,11 +44,12 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.part.NullEditorInput;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import org.eclipse.ui.tests.api.MockViewPart;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Very simple leak tests to determine if any of our heavy objects are not being
@@ -52,17 +58,15 @@ import org.junit.runners.JUnit4;
  *
  * @since 3.1
  */
-@RunWith(JUnit4.class)
-public class LeakTests extends UITestCase {
+public class LeakTests {
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
 	private IWorkbenchPage fActivePage;
 
 	private IWorkbenchWindow fWin;
 
 	private IProject proj;
-
-	public LeakTests() {
-		super(LeakTests.class.getSimpleName());
-	}
 
 	public static void checkRef(ReferenceQueue<?> queue, Reference<?> ref)
 			throws IllegalArgumentException, InterruptedException {
@@ -87,16 +91,14 @@ public class LeakTests extends UITestCase {
 		return new PhantomReference<>(object, queue);
 	}
 
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		fWin = openTestWindow(IDE.RESOURCE_PERSPECTIVE_ID);
 		fActivePage = fWin.getActivePage();
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
+	@After
+	public final void tearDown() throws Exception {
 		fWin = null;
 		fActivePage = null;
 		if (proj != null) {
@@ -282,25 +284,17 @@ public class LeakTests extends UITestCase {
 
 	@Test
 	public void testSimpleWindowLeak() throws Exception {
-		// turn off window management so that we dont have a reference to our
-		// new
-		// window in the listener
-		manageWindows(false);
-		try {
-			ReferenceQueue queue = new ReferenceQueue();
-			IWorkbenchWindow newWindow = openTestWindow();
+		ReferenceQueue queue = new ReferenceQueue();
+		IWorkbenchWindow newWindow = openTestWindow();
 
-			assertNotNull(newWindow);
-			Reference ref = createReference(queue, newWindow);
-			try {
-				newWindow.close();
-				newWindow = null;
-				checkRef(queue, ref);
-			} finally {
-				ref.clear();
-			}
+		assertNotNull(newWindow);
+		Reference ref = createReference(queue, newWindow);
+		try {
+			newWindow.close();
+			newWindow = null;
+			checkRef(queue, ref);
 		} finally {
-			manageWindows(true);
+			ref.clear();
 		}
 	}
 

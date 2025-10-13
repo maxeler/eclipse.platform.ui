@@ -13,7 +13,11 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.api;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
@@ -28,34 +32,31 @@ import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
 import org.eclipse.ui.XMLMemento;
 import org.eclipse.ui.internal.WorkingSet;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
 import org.eclipse.ui.tests.menus.ObjectContributionClasses.IA;
 import org.eclipse.ui.tests.menus.ObjectContributionClasses.ICommon;
 import org.eclipse.ui.tests.menus.ObjectContributionClasses.IModelElement;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class IWorkingSetTest extends UITestCase {
+public class IWorkingSetTest {
 	static final String WORKING_SET_NAME_1 = "ws1";
 
 	static final String WORKING_SET_NAME_2 = "ws2";
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	IWorkspace fWorkspace;
 
 	IWorkingSet fWorkingSet;
 
-	public IWorkingSetTest() {
-		super(IWorkingSetTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
-		IWorkingSetManager workingSetManager = fWorkbench
-				.getWorkingSetManager();
+	@Before
+	public final void setUp() throws Exception {
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 
 		fWorkspace = ResourcesPlugin.getWorkspace();
 		fWorkingSet = workingSetManager.createWorkingSet(WORKING_SET_NAME_1,
@@ -63,13 +64,13 @@ public class IWorkingSetTest extends UITestCase {
 
 		workingSetManager.addWorkingSet(fWorkingSet);
 	}
-	@Override
-	protected void doTearDown() throws Exception {
-		IWorkingSetManager workingSetManager = fWorkbench
-		.getWorkingSetManager();
+
+	@After
+	public final void tearDown() throws Exception {
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 		workingSetManager.removeWorkingSet(fWorkingSet);
-		super.doTearDown();
 	}
+
 	@Test
 	public void testGetElements() throws Throwable {
 		assertEquals(fWorkspace.getRoot(), fWorkingSet.getElements()[0]);
@@ -157,8 +158,7 @@ public class IWorkingSetTest extends UITestCase {
 	@Test
 	public void testNoDuplicateWorkingSetName() throws Throwable {
 		/* get workingSetManager */
-		IWorkingSetManager workingSetManager = fWorkbench
-				.getWorkingSetManager();
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 
 		/*
 		 * check that initially workingSetManager contains "fWorkingSet"
@@ -195,8 +195,7 @@ public class IWorkingSetTest extends UITestCase {
 	public void testNoDuplicateWorkingSetNamesDifferentLabels()
 			throws Throwable {
 		/* get workingSetManager */
-		IWorkingSetManager workingSetManager = fWorkbench
-				.getWorkingSetManager();
+		IWorkingSetManager workingSetManager = getWorkbench().getWorkingSetManager();
 		/*
 		 * check that initially workingSetManager contains "fWorkingSet"
 		 */
@@ -306,15 +305,10 @@ public class IWorkingSetTest extends UITestCase {
 		fWorkingSet.saveState(m);
 		BadElementFactory.shouldFailOnCreateElement = true;
 		IWorkingSet copy = new WorkingSet(fWorkingSet.getName(), fWorkingSet.getId(), m) {};
-		try {
-			assertFalse(BadElementFactory.elementCreationAttemptedWhileShouldFail);
-			IAdaptable [] elements = copy.getElements();
-			assertTrue(BadElementFactory.elementCreationAttemptedWhileShouldFail);
-			assertEquals("Element array should be empty", 0, elements.length);
-		}
-		catch (RuntimeException e) {
-			fail("Error getting elements for broken factory", e);
-		}
+		assertFalse(BadElementFactory.elementCreationAttemptedWhileShouldFail);
+		IAdaptable[] elements = copy.getElements();
+		assertTrue(BadElementFactory.elementCreationAttemptedWhileShouldFail);
+		assertEquals("Element array should be empty", 0, elements.length);
 	}
 
 	/**
@@ -328,12 +322,8 @@ public class IWorkingSetTest extends UITestCase {
 		IMemento m = XMLMemento.createWriteRoot("ws");
 		BadElementFactory.BadElementInstance.shouldSaveFail = true;
 		assertFalse(BadElementFactory.BadElementInstance.saveAttemptedWhileShouldFail);
-		try {
-			fWorkingSet.saveState(m);
-			assertTrue(BadElementFactory.BadElementInstance.saveAttemptedWhileShouldFail);
-		} catch (RuntimeException e) {
-			fail("Error saving elements for broken persistable", e);
-		}
+		fWorkingSet.saveState(m);
+		assertTrue(BadElementFactory.BadElementInstance.saveAttemptedWhileShouldFail);
 	}
 
 	public static class Foo implements IAdaptable {

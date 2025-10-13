@@ -14,6 +14,8 @@
 package org.eclipse.ui.tests.api;
 
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -22,32 +24,26 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.progress.UIJob;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.1
  */
-@RunWith(JUnit4.class)
-public class UIJobTest extends UITestCase {
+public class UIJobTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	protected IWorkbenchWindow fWindow;
 
 	protected IWorkbenchPage fPage;
 
-	/**
-	 * Constructor for IEditorPartTest
-	 */
-	public UIJobTest() {
-		super(UIJobTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		fWindow = openTestWindow();
 		fPage = fWindow.getActivePage();
 	}

@@ -14,47 +14,37 @@
 
 package org.eclipse.jface.tests.performance;
 
-import java.lang.reflect.InvocationTargetException;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
 
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.test.performance.Dimension;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
+import org.eclipse.ui.tests.performance.UIPerformanceTestRule;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * @since 3.3
  */
 public class ProgressMonitorDialogPerformanceTest extends BasicPerformanceTest {
 
-	public ProgressMonitorDialogPerformanceTest(String testName) {
-		super(testName);
-	}
-
-	/**
-	 * Create a new instance of the receiver.
-	 */
-	public ProgressMonitorDialogPerformanceTest(String testName, int tagging) {
-		super(testName, tagging);
-
-	}
+	@ClassRule
+	public static final UIPerformanceTestRule uiPerformanceTestRule = new UIPerformanceTestRule();
 
 	/**
 	 * Test the time for doing a refresh.
 	 */
+	@Test
 	public void testLongNames() throws Throwable {
-
-		tagIfNecessary("JFace - 10000 element task name in progress dialog",
-				Dimension.ELAPSED_PROCESS);
-		setDegradationComment("The test changed in 3.7. For details, consult bug 298952.");
-
 		Display display = Display.getCurrent();
 		if (display == null) {
 			display = new Display();
 		}
 
-		ProgressMonitorDialog dialog = new ProgressMonitorDialog(new Shell(display));
+		Shell shell = new Shell(display);
+		ProgressMonitorDialog dialog = new ProgressMonitorDialog(shell);
 
 		IRunnableWithProgress runnable = monitor -> {
 
@@ -80,14 +70,12 @@ public class ProgressMonitorDialogPerformanceTest extends BasicPerformanceTest {
 			}
 		};
 
-		try {
-			dialog.run(false, true, runnable);
-		} catch (InvocationTargetException | InterruptedException e) {
-			fail(e.getMessage(), e);
-		}
+		dialog.run(false, true, runnable);
 
 		commitMeasurements();
 		assertPerformance();
+
+		shell.dispose();
 	}
 
 }

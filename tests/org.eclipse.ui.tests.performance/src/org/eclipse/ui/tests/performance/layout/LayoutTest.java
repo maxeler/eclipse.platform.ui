@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance.layout;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.util.Geometry;
 import org.eclipse.swt.graphics.Point;
@@ -20,6 +22,7 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
+import org.junit.Test;
 
 /**
  * Measures the time required to layout the widget 10 times. Does not include
@@ -38,9 +41,6 @@ public class LayoutTest extends BasicPerformanceTest {
 	private final boolean flushState;
 
 	public LayoutTest(TestWidgetFactory widgetFactory, boolean flushState) {
-		super(widgetFactory.getName() + " layout("
-				+ (flushState ? "true" : "false") + ")");
-
 		this.widgetFactory = widgetFactory;
 		this.flushState = flushState;
 	}
@@ -48,8 +48,8 @@ public class LayoutTest extends BasicPerformanceTest {
 	/**
 	 * Run the test
 	 */
-	@Override
-	protected void runTest() throws CoreException, WorkbenchException {
+	@Test
+	public void test() throws CoreException, WorkbenchException {
 
 		widgetFactory.init();
 		final Composite widget = widgetFactory.getControl();

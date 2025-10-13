@@ -13,6 +13,13 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.preferences;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEventsUntil;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.waitForJobs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -49,20 +56,22 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPreferenceConstants;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.views.markers.MarkersTreeViewer;
 import org.eclipse.ui.intro.IIntroPart;
 import org.eclipse.ui.navigator.CommonViewer;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.EmptyPerspective;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class ViewerItemsLimitTest extends UITestCase {
+public class ViewerItemsLimitTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	private IPreferenceStore preferenceStore;
 
@@ -80,13 +89,8 @@ public class ViewerItemsLimitTest extends UITestCase {
 
 	private IWorkbenchPage activePage;
 
-	public ViewerItemsLimitTest() {
-		super(ViewerItemsLimitTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		cleanUp();
 		preferenceStore = WorkbenchPlugin.getDefault().getPreferenceStore();
 		int viewLimit = preferenceStore.getInt(IWorkbenchPreferenceConstants.LARGE_VIEW_LIMIT);
@@ -98,15 +102,14 @@ public class ViewerItemsLimitTest extends UITestCase {
 		getWorkbench().showPerspective(EmptyPerspective.PERSP_ID, window);
 	}
 
-	@Override
-	protected void doTearDown() throws Exception {
+	@After
+	public final void tearDown() throws Exception {
 		cleanUp();
 		preferenceStore.setValue(IWorkbenchPreferenceConstants.LARGE_VIEW_LIMIT, DEFAULT_VIEW_LIMIT);
 		activePage.closeAllPerspectives(false, false);
 		if (defaultPerspective != null) {
 			getWorkbench().showPerspective(defaultPerspective.getId(), window);
 		}
-		super.doTearDown();
 	}
 
 	/**
@@ -189,7 +192,7 @@ public class ViewerItemsLimitTest extends UITestCase {
 	}
 
 	private IWorkbenchWindow getActiveWindow() {
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		IWorkbenchWindow window = getWorkbench().getActiveWorkbenchWindow();
 		assertNotNull("Should get one window", window);
 		return window;
 	}
@@ -224,7 +227,7 @@ public class ViewerItemsLimitTest extends UITestCase {
 	}
 
 	private static IWorkbench closeIntro() {
-		IWorkbench workbench = PlatformUI.getWorkbench();
+		IWorkbench workbench = getWorkbench();
 		IIntroPart introPart = workbench.getIntroManager().getIntro();
 		if (introPart != null) {
 			workbench.getIntroManager().closeIntro(introPart);

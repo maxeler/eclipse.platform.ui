@@ -13,6 +13,11 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.dynamicplugins;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 
@@ -20,9 +25,13 @@ import org.eclipse.core.runtime.IExtensionDelta;
 import org.eclipse.core.runtime.IRegistryChangeEvent;
 import org.eclipse.core.runtime.IRegistryChangeListener;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.leaks.LeakTests;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -32,8 +41,10 @@ import org.osgi.framework.BundleException;
  *
  * @since 3.1
  */
-public abstract class DynamicTestCase extends UITestCase implements
-		IRegistryChangeListener {
+public abstract class DynamicTestCase implements IRegistryChangeListener {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	private volatile boolean addedRecieved;
 
@@ -47,13 +58,8 @@ public abstract class DynamicTestCase extends UITestCase implements
 
 	private ReferenceQueue<IExtensionDelta> queue;
 
-	public DynamicTestCase(String testName) {
-		super(testName);
-	}
-
-	@Override
-	protected void doTearDown() throws Exception {
-		super.doTearDown();
+	@After
+	public final void tearDown() throws Exception {
 		try {
 			removeBundle();
 		}
@@ -61,6 +67,10 @@ public abstract class DynamicTestCase extends UITestCase implements
 			Platform.getExtensionRegistry().removeRegistryChangeListener(this);
 			queue = null;
 		}
+	}
+
+	protected static final IWorkbench getWorkbench() {
+		return PlatformUI.getWorkbench();
 	}
 
 	/**

@@ -14,31 +14,24 @@
 
 package org.eclipse.ui.tests.propertyPages;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Collection;
 
 import org.eclipse.ui.internal.dialogs.PropertyPageContributorManager;
 import org.eclipse.ui.internal.dialogs.RegistryPageContributor;
 import org.eclipse.ui.tests.navigator.AbstractNavigatorTest;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.2
  */
-@RunWith(JUnit4.class)
 public class PropertyPageEnablementTest extends AbstractNavigatorTest {
 
-	/**
-	 * Create an instance of the receiver.
-	 */
-	public PropertyPageEnablementTest() {
-		super(PropertyPageEnablementTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
 		createTestFile();
 	}
 
@@ -51,25 +44,8 @@ public class PropertyPageEnablementTest extends AbstractNavigatorTest {
 		Collection<RegistryPageContributor> contributors = PropertyPageContributorManager.getManager()
 				.getApplicableContributors(testFile);
 		assertFalse("Has no file pages", contributors.isEmpty());
-		for (RegistryPageContributor element : contributors) {
-			if (element.getPageId().equals("org.eclipse.ui.tests.and")) {
-				return;
-			}
-		}
-		fail("And property page for file not found");
-
-		contributors = PropertyPageContributorManager.getManager().getApplicableContributors(testFolder);
-		for (RegistryPageContributor element : contributors) {
-			assertFalse("Matching folder for AND", element.getPageId().equals("org.eclipse.ui.tests.and"));
-
-		}
-
-		contributors = PropertyPageContributorManager.getManager().getApplicableContributors(testProject);
-		for (RegistryPageContributor element : contributors) {
-			assertFalse("Matching project for AND", element.getPageId().equals("org.eclipse.ui.tests.and"));
-
-		}
-
+		assertTrue("And property page for file not found",
+				contributors.stream().anyMatch(element -> element.getPageId().equals("org.eclipse.ui.tests.and")));
 	}
 
 	/**

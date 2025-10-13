@@ -13,12 +13,15 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.performance.layout;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
+import org.junit.Test;
 
 /**
  * Measures the performance of a widget's computeSize method
@@ -32,13 +35,11 @@ public class ComputeSizeTest extends BasicPerformanceTest {
 	private final int yIterations = 10;
 
 	public ComputeSizeTest(TestWidgetFactory widgetFactory) {
-		super(widgetFactory.getName() + " computeSize");
-
 		this.widgetFactory = widgetFactory;
 	}
 
-	@Override
-	protected void runTest() throws CoreException, WorkbenchException {
+	@Test
+	public void test() throws CoreException, WorkbenchException {
 
 		widgetFactory.init();
 		final Composite widget = widgetFactory.getControl();

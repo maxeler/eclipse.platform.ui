@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2006 IBM Corporation and others.
+ * Copyright (c) 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -11,22 +11,21 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.ui.tests.api;
-
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-
-import junit.framework.TestSuite;
+package org.eclipse.jface.dialogs;
 
 /**
- * Test the workbench. This suite was created as a
- * workaround for problems running the suites from the
- * command line.
+ * A listener which is notified when the scope for the search page is changed.
+ *
+ * @see IScopeChangeProvider
+ * @see ScopeChangedEvent
+ *
+ * @since 3.38
  */
-@RunWith(Suite.class)
-@Suite.SuiteClasses({
-	IWorkbenchTest.class,
-	IWorkbenchWindowTest.class,
-})
-public class IWorkbenchTestSuite extends TestSuite {
+public interface IScopeChangedListener {
+	/**
+	 * Notifies that the selected scope has changed.
+	 *
+	 * @param event event object describing the change
+	 */
+	void scopeChanged(ScopeChangedEvent event);
 }

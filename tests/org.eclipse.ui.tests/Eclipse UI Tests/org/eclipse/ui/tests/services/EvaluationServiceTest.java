@@ -15,6 +15,17 @@
 
 package org.eclipse.ui.tests.services;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.forceActive;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.waitForJobs;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -45,7 +56,6 @@ import org.eclipse.ui.ISources;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.contexts.IContextActivation;
 import org.eclipse.ui.contexts.IContextService;
 import org.eclipse.ui.handlers.IHandlerActivation;
@@ -57,27 +67,24 @@ import org.eclipse.ui.services.IEvaluationService;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.tests.SelectionProviderView;
 import org.eclipse.ui.tests.commands.ActiveContextExpression;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.junit.Assume;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.junit.runners.MethodSorters;
 
 /**
  * @since 3.3
  */
-@RunWith(JUnit4.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class EvaluationServiceTest extends UITestCase {
+public class EvaluationServiceTest {
 	private static final String CHECK_HANDLER_ID = "org.eclipse.ui.tests.services.checkHandler";
 	private static final String CONTEXT_ID1 = "org.eclipse.ui.command.contexts.evaluationService1";
 
-	public EvaluationServiceTest() {
-		super(EvaluationServiceTest.class.getName());
-	}
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
 
 	private static class MyEval implements IPropertyChangeListener {
 		public volatile int count = 0;
@@ -95,8 +102,8 @@ public class EvaluationServiceTest extends UITestCase {
 
 	@Test
 	public void testBug334524() throws Exception {
-		IPerspectiveRegistry registry = PlatformUI.getWorkbench().getPerspectiveRegistry();
-		IPerspectiveDescriptor resourecePerspective = registry.findPerspectiveWithId("org.eclipse.ui.resourcePerspective");
+		IPerspectiveRegistry registry = getWorkbench().getPerspectiveRegistry();
+		IPerspectiveDescriptor resourcePerspective = registry.findPerspectiveWithId("org.eclipse.ui.resourcePerspective");
 		IPerspectiveDescriptor javaPerspective = registry.findPerspectiveWithId("org.eclipse.jdt.ui.JavaPerspective");
 		String viewId = "org.eclipse.ui.tests.SelectionProviderView";
 
@@ -104,7 +111,7 @@ public class EvaluationServiceTest extends UITestCase {
 		IWorkbenchPage activePage = window.getActivePage();
 
 		// show view in resource perspective
-		activePage.setPerspective(resourecePerspective);
+		activePage.setPerspective(resourcePerspective);
 		SelectionProviderView view = (SelectionProviderView) activePage.showView(viewId);
 		processEvents();
 
@@ -119,7 +126,7 @@ public class EvaluationServiceTest extends UITestCase {
 		processEvents();
 
 		// switch perspective & check selection
-		activePage.setPerspective(resourecePerspective);
+		activePage.setPerspective(resourcePerspective);
 		processEvents();
 
 		IEvaluationService service = window.getService(IEvaluationService.class);
@@ -544,8 +551,7 @@ public class EvaluationServiceTest extends UITestCase {
 
 	@Test
 	public void testPlatformProperty() throws Exception {
-		IEvaluationService evaluationService = PlatformUI
-				.getWorkbench().getService(IEvaluationService.class);
+		IEvaluationService evaluationService = getWorkbench().getService(IEvaluationService.class);
 		TestExpression test = new TestExpression("org.eclipse.core.runtime",
 				"bundleState",
 				new Object[] { "org.eclipse.core.expressions" }, "ACTIVE", false);
@@ -561,8 +567,7 @@ public class EvaluationServiceTest extends UITestCase {
 		// this is not added, as the ability to test system properties with
 		// no '.' seems unhelpful
 		System.setProperty("isHere", "true");
-		IEvaluationService evaluationService = PlatformUI
-				.getWorkbench().getService(IEvaluationService.class);
+		IEvaluationService evaluationService = getWorkbench().getService(IEvaluationService.class);
 		TestExpression test = new TestExpression("org.eclipse.core.runtime",
 				"isHere",
 				new Object[] { "true" }, null, false);

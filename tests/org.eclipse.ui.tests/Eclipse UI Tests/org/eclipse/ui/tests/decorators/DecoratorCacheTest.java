@@ -14,6 +14,8 @@
 
 package org.eclipse.ui.tests.decorators;
 
+import static org.junit.Assert.assertTrue;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -27,20 +29,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.tests.navigator.AbstractNavigatorTest;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * @since 3.4
  */
-@RunWith(JUnit4.class)
 public class DecoratorCacheTest extends AbstractNavigatorTest {
 
 	protected DecoratingLabelProvider dlp;
-
-	public DecoratorCacheTest() {
-		super(DecoratorCacheTest.class.getSimpleName());
-	}
 
 	protected StructuredViewer createViewer(Composite parent) {
 		dlp = new DecoratingLabelProvider(new LabelProvider(), PlatformUI
@@ -54,7 +49,7 @@ public class DecoratorCacheTest extends AbstractNavigatorTest {
 	}
 
 	@Test
-	public void testDecoratorCacheIsDisposed() {
+	public void testDecoratorCacheIsDisposed() throws CoreException {
 
 		Display fDisplay = Display.getCurrent();
 		if (fDisplay == null) {
@@ -66,11 +61,7 @@ public class DecoratorCacheTest extends AbstractNavigatorTest {
 		StructuredViewer fViewer = createViewer(fShell);
 		fViewer.setUseHashlookup(true);
 
-		try {
-			createTestFile();
-		} catch (CoreException e) {
-			fail(e.getLocalizedMessage(), e);
-		}
+		createTestFile();
 		fViewer.setInput(testFile);
 		fShell.open();
 

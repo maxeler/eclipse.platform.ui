@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019 Red Hat Inc. and others.
+ * Copyright (c) 2019, 2025 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -63,7 +63,8 @@ import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.AnnotationPainter;
 import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.text.tests.TextViewerTest;
-import org.eclipse.jface.text.tests.util.DisplayHelper;
+
+import org.eclipse.ui.tests.harness.util.DisplayHelper;
 
 public class CodeMiningTest {
 
@@ -515,7 +516,7 @@ public class CodeMiningTest {
 			starty= lineBounds.y;
 		}
 
-		Image image= new Image(widget.getDisplay(), widget.getSize().x, widget.getSize().y);
+		Image image= new Image(widget.getDisplay(), (gc, width, height) -> {}, widget.getSize().x, widget.getSize().y);
 		try {
 			GC gc= new GC(widget);
 			gc.copyArea(image, 0, 0);
@@ -555,7 +556,7 @@ public class CodeMiningTest {
 		} else {
 			secondLineBounds= widget.getTextBounds(lineOffset, lineOffset + lineLength);
 		}
-		Image image = new Image(widget.getDisplay(), widget.getSize().x, widget.getSize().y);
+		Image image = new Image(widget.getDisplay(), (gc, width, height) -> {}, widget.getSize().x, widget.getSize().y);
 		GC gc = new GC(widget);
 		gc.copyArea(image, 0, 0);
 		gc.dispose();

@@ -13,36 +13,46 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.api;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.closeAllPages;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestPage;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.StatusLineManager;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.WorkbenchException;
 import org.eclipse.ui.internal.WorkbenchWindow;
 import org.eclipse.ui.tests.harness.util.ArrayUtil;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.EmptyPerspective;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class IWorkbenchWindowTest extends UITestCase {
+public class IWorkbenchWindowTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
+	private IWorkbench fWorkbench;
 
 	private IWorkbenchWindow fWin;
 
-	public IWorkbenchWindowTest() {
-		super(IWorkbenchWindowTest.class.getSimpleName());
-	}
-
-	@Override
-	protected void doSetUp() throws Exception {
-		super.doSetUp();
+	@Before
+	public final void setUp() throws Exception {
+		fWorkbench = PlatformUI.getWorkbench();
 		fWin = openTestWindow();
 	}
 
@@ -175,13 +185,10 @@ public class IWorkbenchWindowTest extends UITestCase {
 		}
 
 		// test openPage() fails
-		try {
-			page = fWin.openPage("*************", ResourcesPlugin.getWorkspace());
-			fail();
-		} catch (WorkbenchException ex) {
-		}
-
-		page.close();
+		assertThrows(WorkbenchException.class, () -> {
+			IWorkbenchPage p = fWin.openPage("*************", ResourcesPlugin.getWorkspace());
+			p.close();
+		});
 	}
 
 	@Test

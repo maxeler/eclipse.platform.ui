@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016-2017 Red Hat Inc. and others
+ * Copyright (c) 2016, 2025 Red Hat Inc. and others
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -17,13 +17,12 @@ import static org.eclipse.ui.genericeditor.tests.contributions.BarContentAssistP
 import static org.eclipse.ui.genericeditor.tests.contributions.LongRunningBarContentAssistProcessor.LONG_RUNNING_BAR_CONTENT_ASSIST_PROPOSAL;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,11 +32,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -45,7 +45,6 @@ import org.osgi.framework.ServiceRegistration;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ST;
-import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
@@ -60,18 +59,17 @@ import org.eclipse.core.runtime.ILogListener;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 
-import org.eclipse.jface.util.Util;
-
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.contentassist.ICompletionProposal;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContextInformation;
 import org.eclipse.jface.text.contentassist.IContextInformationValidator;
-import org.eclipse.jface.text.tests.util.DisplayHelper;
 
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.genericeditor.tests.contributions.EnabledPropertyTester;
 import org.eclipse.ui.genericeditor.tests.contributions.LongRunningBarContentAssistProcessor;
+import org.eclipse.ui.tests.harness.util.DisplayHelper;
 
 import org.eclipse.ui.texteditor.ContentAssistAction;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
@@ -84,14 +82,16 @@ public class CompletionTest extends AbstratGenericEditorTest {
 	private Shell completionShell;
 
 	@Test
+	@DisabledOnOs(value = OS.MAC, disabledReason = "test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906")
 	public void testCompletion() throws Exception {
-		assumeFalse("test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906", Util.isMac());
 		editor.selectAndReveal(3, 0);
-		this.completionShell= openConentAssist();
+		this.completionShell = openContentAssist(true);
 		final Table completionProposalList = findCompletionSelectionControl(completionShell);
 		checkCompletionContent(completionProposalList);
-		// TODO find a way to actually trigger completion and verify result against Editor content
-		// Assert.assertEquals("Completion didn't complete", "bars are good for a beer.", ((StyledText)editor.getAdapter(Control.class)).getText());
+		// TODO find a way to actually trigger completion and verify result against
+		// Editor content
+		// Assert.assertEquals("Completion didn't complete", "bars are good for a
+		// beer.", ((StyledText)editor.getAdapter(Control.class)).getText());
 	}
 
 	@Test
@@ -100,15 +100,15 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		TestLogListener listener= new TestLogListener();
 		log.addLogListener(listener);
 		createAndOpenFile("Bug570488.txt", "bar 'bar'");
-		openConentAssist(false);
-		DisplayHelper.driveEventQueue(Display.getCurrent());
-		assertFalse("There are errors in the log", listener.messages.stream().anyMatch(s -> s.matches(IStatus.ERROR)));
+		openContentAssist(false);
+		DisplayHelper.runEventLoop(Display.getCurrent(), 0);
+		assertFalse(listener.messages.stream().anyMatch(s -> s.matches(IStatus.ERROR)), "There are errors in the log");
 		log.removeLogListener(listener);
 	}
 
 	@Test
+	@DisabledOnOs(value = OS.MAC, disabledReason = "test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906")
 	public void testCompletionService() throws Exception {
-		assumeFalse("test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906", Util.isMac());
 		Bundle bundle= FrameworkUtil.getBundle(CompletionTest.class);
 		assertNotNull(bundle);
 		BundleContext bundleContext= bundle.getBundleContext();
@@ -116,34 +116,26 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		MockContentAssistProcessor service= new MockContentAssistProcessor();
 		ServiceRegistration<IContentAssistProcessor> registration= bundleContext.registerService(IContentAssistProcessor.class, service,
 				new Hashtable<>(Collections.singletonMap("contentType", "org.eclipse.ui.genericeditor.tests.content-type")));
-		DisplayHelper.driveEventQueue(Display.getCurrent());
+		DisplayHelper.runEventLoop(Display.getCurrent(), 0);
 		editor.selectAndReveal(3, 0);
-		this.completionShell= openConentAssist();
+		this.completionShell= openContentAssist(true);
 		final Table completionProposalList= findCompletionSelectionControl(completionShell);
+		assertTrue(service.called, "Service was not called!");
 		checkCompletionContent(completionProposalList);
-		assertTrue("Service was not called!", service.called);
 		registration.unregister();
 	}
 
 	@Test
+	@DisabledOnOs(value = OS.MAC, disabledReason = "test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906")
 	public void testCompletionUsingViewerSelection() throws Exception {
-		assumeFalse("test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906", Util.isMac());
 		editor.getDocumentProvider().getDocument(editor.getEditorInput()).set("abc");
 		editor.selectAndReveal(0, 3);
-		this.completionShell= openConentAssist();
+		this.completionShell= openContentAssist(true);
 		final Table completionProposalList = findCompletionSelectionControl(completionShell);
-		waitForProposalRelatedCondition("Proposal list did not contain expected item: ABC", completionProposalList,
-				() -> Arrays.stream(completionProposalList.getItems()).map(TableItem::getText).anyMatch("ABC"::equals), 5_000);
-	}
-	
-	private static void waitForProposalRelatedCondition(String errorMessage, Table completionProposalList, BooleanSupplier condition, int timeoutInMsec) {
-		assertTrue(errorMessage, new DisplayHelper() {
-			@Override
-			protected boolean condition() {
-				assertFalse("Completion proposal list was unexpectedly disposed", completionProposalList.isDisposed());
-				return condition.getAsBoolean();
-			}
-		}.waitForCondition(completionProposalList.getDisplay(), timeoutInMsec));
+		assertTrue(DisplayHelper.waitForCondition(completionProposalList.getDisplay(), 5000, () -> {
+			assertFalse(completionProposalList.isDisposed(), "Completion proposal list was unexpectedly disposed");
+			return Arrays.stream(completionProposalList.getItems()).map(TableItem::getText).anyMatch("ABC"::equals);
+		}), "Proposal list did not contain expected item: ABC");
 	}
 	
 	@Test
@@ -152,26 +144,23 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		EnabledPropertyTester.setEnabled(false);
 		createAndOpenFile("enabledWhen.txt", "bar 'bar'");
 		editor.selectAndReveal(3, 0);
-		assertNull("A new shell was found", openConentAssist(false));
+		assertNull(openContentAssist(false), "A new shell was found");
 		cleanFileAndEditor();
 
 		// Confirm that when enabled, a completion shell is present
 		EnabledPropertyTester.setEnabled(true);
 		createAndOpenFile("enabledWhen.txt", "bar 'bar'");
 		editor.selectAndReveal(3, 0);		
-		assertNotNull(openConentAssist());
+		assertNotNull(openContentAssist(true));
 	}
 
-	private Shell openConentAssist() {
-		return openConentAssist(true);
-	}
-	private Shell openConentAssist(boolean expectShell) {
+	private Shell openContentAssist(boolean expectShell) {
 		ContentAssistAction action = (ContentAssistAction) editor.getAction(ITextEditorActionConstants.CONTENT_ASSIST);
 		action.update();
 		final Set<Shell> beforeShells = Arrays.stream(editor.getSite().getShell().getDisplay().getShells()).filter(Shell::isVisible).collect(Collectors.toSet());
 		action.run(); //opens shell
 		Shell shell= findNewShell(beforeShells, editor.getSite().getShell().getDisplay(),expectShell);
-		waitAndDispatch(100); // can dispose shell when focus lost during debugging
+		DisplayHelper.runEventLoop(PlatformUI.getWorkbench().getDisplay(), 100); // can dispose shell when focus lost during debugging
 		return shell;
 	}
 
@@ -184,19 +173,22 @@ public class CompletionTest extends AbstratGenericEditorTest {
 	 */
 	private void checkCompletionContent(final Table completionProposalList) {
 		// should be instantaneous, but happens to go asynchronous on CI so let's allow a wait
-		waitForProposalRelatedCondition("Proposal list did not show two initial items", completionProposalList, 
-				() -> completionProposalList.getItemCount() == 2, 200);
-		assertTrue("Missing computing info entry", isComputingInfoEntry(completionProposalList.getItem(0)));
-		assertTrue("Missing computing info entry in proposal list", isComputingInfoEntry(completionProposalList.getItem(0)));
+		assertTrue(DisplayHelper.waitForCondition(completionProposalList.getDisplay(), 200, () -> {
+			assertFalse(completionProposalList.isDisposed(), "Completion proposal list was unexpectedly disposed");
+			return completionProposalList.getItemCount() == 2 && completionProposalList.getItem(1).getData() != null;
+		}), "Proposal list did not show two initial items");
+		assertTrue(isComputingInfoEntry(completionProposalList.getItem(0)), "Missing computing info entry in proposal list");
 		final TableItem initialProposalItem = completionProposalList.getItem(1);
+		System.out.println(initialProposalItem.toString());
 		final String initialProposalString = ((ICompletionProposal)initialProposalItem.getData()).getDisplayString();
 		assertThat("Unexpected initial proposal item", 
 				BAR_CONTENT_ASSIST_PROPOSAL, endsWith(initialProposalString));
 		completionProposalList.setSelection(initialProposalItem);
 		// asynchronous
-		waitForProposalRelatedCondition("Proposal list did not show two items after finishing computing", completionProposalList, 
-				() -> !isComputingInfoEntry(completionProposalList.getItem(0)) && completionProposalList.getItemCount() == 2,
-				LongRunningBarContentAssistProcessor.DELAY + 200);
+		assertTrue(DisplayHelper.waitForCondition(completionProposalList.getDisplay(), LongRunningBarContentAssistProcessor.DELAY * 2, () -> {
+			assertFalse(completionProposalList.isDisposed(), "Completion proposal list was unexpectedly disposed");
+			return !isComputingInfoEntry(completionProposalList.getItem(0)) && completionProposalList.getItemCount() == 2;
+		}), "Proposal list did not show two items after finishing computing");
 		final TableItem firstCompletionProposalItem = completionProposalList.getItem(0);
 		final TableItem secondCompletionProposalItem = completionProposalList.getItem(1);
 		String firstCompletionProposalText = ((ICompletionProposal)firstCompletionProposalItem.getData()).getDisplayString();
@@ -204,7 +196,7 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		assertThat("Unexpected first proposal item", BAR_CONTENT_ASSIST_PROPOSAL, endsWith(firstCompletionProposalText));
 		assertThat("Unexpected second proposal item", LONG_RUNNING_BAR_CONTENT_ASSIST_PROPOSAL, endsWith(secondCompletionProposalText));
 		String selectedProposalString = ((ICompletionProposal)completionProposalList.getSelection()[0].getData()).getDisplayString();
-		assertEquals("Addition of completion proposal should keep selection", initialProposalString, selectedProposalString);
+		assertEquals(initialProposalString, selectedProposalString, "Addition of completion proposal should keep selection");
 	}
 	
 	private static boolean isComputingInfoEntry(TableItem item) {
@@ -212,38 +204,40 @@ public class CompletionTest extends AbstratGenericEditorTest {
 	}
 
 	public static Shell findNewShell(Set<Shell> beforeShells, Display display, boolean expectShell) {
-		Shell[] afterShells = Arrays.stream(display.getShells())
+		List<Shell> afterShells = Arrays.stream(display.getShells())
 				.filter(Shell::isVisible)
 				.filter(shell -> !beforeShells.contains(shell))
-				.toArray(Shell[]::new);
+				.toList();
 		if (expectShell) {
-			assertEquals("No new shell found", 1, afterShells.length);
+			assertEquals(1, afterShells.size(), "No new shell found");
 		}
-		return afterShells.length > 0 ? afterShells[0] : null;
+		return afterShells.isEmpty() ? null : afterShells.get(0);
 	}
 
 	@Test
+	@DisabledOnOs(value = OS.MAC, disabledReason = "test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906")
 	public void testCompletionFreeze_bug521484() throws Exception {
-		assumeFalse("test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906", Util.isMac());
 		editor.selectAndReveal(3, 0);
-		this.completionShell=openConentAssist();
+		this.completionShell=openContentAssist(true);
 		final Table completionProposalList = findCompletionSelectionControl(this.completionShell);
 		// should be instantaneous, but happens to go asynchronous on CI so let's allow a wait
-		waitForProposalRelatedCondition("Proposal list did not show two items", completionProposalList, 
-				() -> completionProposalList.getItemCount() == 2, 200);
-		assertTrue("Missing computing info entry", isComputingInfoEntry(completionProposalList.getItem(0)));
+		assertTrue(DisplayHelper.waitForCondition(completionProposalList.getDisplay(), 200, () -> {
+			assertFalse(completionProposalList.isDisposed(), "Completion proposal list was unexpectedly disposed");
+			return completionProposalList.getItemCount() == 2;
+		}), "Proposal list did not show two items");
+		assertTrue(isComputingInfoEntry(completionProposalList.getItem(0)), "Missing computing info entry");
 		// Some processors are long running, moving cursor can cause freeze (bug 521484)
 		// asynchronous
 		long timestamp = System.currentTimeMillis();
 		emulatePressLeftArrowKey();
 		DisplayHelper.sleep(editor.getSite().getShell().getDisplay(), 200); //give time to process events
 		long processingDuration = System.currentTimeMillis() - timestamp;
-		assertTrue("UI Thread frozen for " + processingDuration + "ms", processingDuration < LongRunningBarContentAssistProcessor.DELAY);
+		assertTrue(processingDuration < LongRunningBarContentAssistProcessor.DELAY, "UI Thread frozen for " + processingDuration + "ms");
 	}
 
 	@Test
+	@DisabledOnOs(value = OS.MAC, disabledReason = "test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906")
 	public void testMoveCaretBackUsesAllProcessors_bug522255() throws Exception {
-		assumeFalse("test fails on Mac, see https://github.com/eclipse-platform/eclipse.platform.ui/issues/906", Util.isMac());
 		testCompletion();
 		emulatePressLeftArrowKey();
 		final Set<Shell> beforeShells = Arrays.stream(editor.getSite().getShell().getDisplay().getShells()).filter(Shell::isVisible).collect(Collectors.toSet());
@@ -255,7 +249,7 @@ public class CompletionTest extends AbstratGenericEditorTest {
 
 	private void emulatePressLeftArrowKey() {
 		editor.selectAndReveal(((ITextSelection)editor.getSelectionProvider().getSelection()).getOffset() - 1, 0);
-		StyledText styledText = (StyledText) editor.getAdapter(Control.class);
+		Control styledText = editor.getAdapter(Control.class);
 		Event e = new Event();
 		e.type = ST.VerifyKey;
 		e.widget = styledText;
@@ -279,7 +273,7 @@ public class CompletionTest extends AbstratGenericEditorTest {
 		return null;
 	}
 
-	@After
+	@AfterEach
 	public void closeShell() {
 		if (this.completionShell != null && !completionShell.isDisposed()) {
 			completionShell.close();

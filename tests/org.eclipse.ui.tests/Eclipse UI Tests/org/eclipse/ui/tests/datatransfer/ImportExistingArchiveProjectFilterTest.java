@@ -14,6 +14,13 @@
 
 package org.eclipse.ui.tests.datatransfer;
 
+import static org.eclipse.ui.PlatformUI.getWorkbench;
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -41,32 +48,29 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.dialogs.ImportExportWizard;
 import org.eclipse.ui.internal.wizards.datatransfer.WizardProjectsImportPage;
 import org.eclipse.ui.internal.wizards.datatransfer.WizardProjectsImportPage.ProjectRecord;
 import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.tests.TestPlugin;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
 import org.eclipse.ui.tests.harness.util.EmptyPerspective;
 import org.eclipse.ui.tests.harness.util.FileUtil;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
-@RunWith(JUnit4.class)
-public class ImportExistingArchiveProjectFilterTest extends UITestCase {
+public class ImportExistingArchiveProjectFilterTest {
+
+	@Rule
+	public final CloseTestWindowsRule closeTestWindowsRule = new CloseTestWindowsRule();
 
 	private static final String DATA_PATH_PREFIX = "data/org.eclipse.datatransferArchives/";
 	private static final String ARCHIVE_JAVA_PROJECT = "ExcludeFilter_Import";
 
-	public ImportExistingArchiveProjectFilterTest() {
-		super(ImportExistingArchiveProjectFilterTest.class.getName());
-	}
-
-	@Override
-	protected void doTearDown() throws Exception {
+	@After
+	public final void tearDown() throws Exception {
 		if (dialog != null) {
 			dialog.close();
 			dialog = null;
@@ -76,7 +80,6 @@ public class ImportExistingArchiveProjectFilterTest extends UITestCase {
 		for (int i = projects.length - 1; i >= 0; i--) {
 			FileUtil.deleteProject(projects[i]);
 		}
-		super.doTearDown();
 	}
 
 	// Testcase for GitHub Issue
@@ -114,9 +117,7 @@ public class ImportExistingArchiveProjectFilterTest extends UITestCase {
 		wpip.createProjects();
 
 		workspaceProjects = root.getProjects();
-		if (workspaceProjects.length != 1) {
-			fail("Incorrect Number of projects imported");
-		}
+		assertEquals("Incorrect Number of projects imported", 1, workspaceProjects.length);
 
 		IWorkbenchPage page = getWorkbench().showPerspective(EmptyPerspective.PERSP_ID,
 				getWorkbench().getActiveWorkbenchWindow());
@@ -124,12 +125,7 @@ public class ImportExistingArchiveProjectFilterTest extends UITestCase {
 		IViewPart navigator = page.showView(IPageLayout.ID_PROJECT_EXPLORER);
 		assertNotNull("failed to open project explorer", navigator);
 
-		ProjectExplorer projectExplorer = null;
-		try {
-			projectExplorer = (ProjectExplorer) navigator;
-		} catch (ClassCastException e) {
-			fail(e.getMessage());
-		}
+		ProjectExplorer projectExplorer = (ProjectExplorer) navigator;
 		// Check project explorer for visibility of res folder for which resource filter
 		// is applied to hide on import
 		TreeViewer treeViewer = projectExplorer.getCommonViewer();
@@ -194,6 +190,6 @@ public class ImportExistingArchiveProjectFilterTest extends UITestCase {
 	}
 
 	private Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		return getWorkbench().getActiveWorkbenchWindow().getShell();
 	}
 }

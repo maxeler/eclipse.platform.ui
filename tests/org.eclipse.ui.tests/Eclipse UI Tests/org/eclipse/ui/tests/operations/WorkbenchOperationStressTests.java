@@ -14,6 +14,8 @@
 
 package org.eclipse.ui.tests.operations;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.openTestWindow;
+
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.operations.IOperationHistory;
 import org.eclipse.core.commands.operations.IUndoContext;
@@ -21,10 +23,9 @@ import org.eclipse.core.commands.operations.IUndoableOperation;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.tests.harness.util.UITestCase;
+import org.eclipse.ui.tests.harness.util.CloseTestWindowsRule;
+import org.junit.Rule;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 /**
  * Stress tests the Operations Framework API to find any interaction problems
@@ -32,16 +33,15 @@ import org.junit.runners.JUnit4;
  *
  * @since 3.1
  */
-@RunWith(JUnit4.class)
-public class WorkbenchOperationStressTests extends UITestCase {
+public class WorkbenchOperationStressTests {
 
 	static int STRESS_TEST_REPETITIONS = 2000;
 
 	static int OPEN_WINDOW_REPETITIONS = 2;
 
-	public WorkbenchOperationStressTests() {
-		super(WorkbenchOperationStressTests.class.getSimpleName());
-	}
+	@Rule
+	public final CloseTestWindowsRule closeTestWindows = new CloseTestWindowsRule();
+
 
 	/*
 	 * Exercise the operations history just before closing the workbench. This

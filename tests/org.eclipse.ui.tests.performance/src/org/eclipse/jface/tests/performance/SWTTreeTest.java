@@ -13,6 +13,8 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.performance;
 
+import static org.eclipse.ui.tests.harness.util.UITestUtil.processEvents;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FillLayout;
@@ -21,20 +23,13 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.tests.performance.BasicPerformanceTest;
+import org.junit.Test;
 
 public class SWTTreeTest extends BasicPerformanceTest {
 
 	Shell browserShell;
 
 	Tree tree;
-
-	public SWTTreeTest(String testName, int tagging) {
-		super(testName, tagging);
-	}
-
-	public SWTTreeTest(String testName) {
-		super(testName);
-	}
 
 	protected void openBrowser() {
 		Display display = Display.getCurrent();
@@ -62,6 +57,7 @@ public class SWTTreeTest extends BasicPerformanceTest {
 	/**
 	 * Test the getItems API.
 	 */
+	@Test
 	public void testGetItems() throws CoreException {
 		openBrowser();
 
@@ -84,6 +80,7 @@ public class SWTTreeTest extends BasicPerformanceTest {
 	 * @throws CoreException
 	 * Test the getItem API.
 	 */
+	@Test
 	public void testGetItemAt() throws CoreException {
 		openBrowser();
 
