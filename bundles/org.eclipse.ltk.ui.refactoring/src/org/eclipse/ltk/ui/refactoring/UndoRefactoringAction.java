@@ -52,7 +52,7 @@ import org.eclipse.ltk.internal.ui.refactoring.UndoManagerAction;
  *
  * @noextend This class is not intended to be subclassed by clients.
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "2025-12")
 public class UndoRefactoringAction extends UndoManagerAction {
 
 	private int fPatternLength;
@@ -60,15 +60,18 @@ public class UndoRefactoringAction extends UndoManagerAction {
 	/**
 	 * Creates a new undo refactoring action.
 	 */
+	@Deprecated
 	public UndoRefactoringAction() {
 	}
 
+	@Deprecated
 	@Override
 	protected String getName() {
 		// PR: 1GEWDUH: ITPJCORE:WINNT - Refactoring - Unable to undo refactoring change
 		return RefactoringUIMessages.UndoRefactoringAction_name;
 	}
 
+	@Deprecated
 	@Override
 	protected IRunnableWithProgress createOperation(Shell parent) {
 		final IValidationCheckResultQuery query= new Query(parent, RefactoringUIMessages.UndoRefactoringAction_error_title) {
@@ -88,14 +91,16 @@ public class UndoRefactoringAction extends UndoManagerAction {
 		};
 	}
 
+	@Deprecated
 	@Override
 	protected UndoManagerAdapter createUndoManagerListener() {
 		return new UndoManagerAdapter() {
 			@Override
 			public void undoStackChanged(IUndoManager manager) {
 				IAction action= getAction();
-				if (action == null)
+				if (action == null) {
 					return;
+				}
 				boolean enabled= false;
 				String text= null;
 				if (manager.anythingToUndo()) {
@@ -110,6 +115,7 @@ public class UndoRefactoringAction extends UndoManagerAction {
 		};
 	}
 
+	@Deprecated
 	@Override
 	public void selectionChanged(IAction action, ISelection s) {
 		if (!isHooked()) {
@@ -117,8 +123,9 @@ public class UndoRefactoringAction extends UndoManagerAction {
 			fPatternLength= RefactoringUIMessages.UndoRefactoringAction_extendedLabel.length();
 			IUndoManager undoManager = RefactoringCore.getUndoManager();
 			if (undoManager.anythingToUndo()) {
-				if (undoManager.peekUndoName() != null)
+				if (undoManager.peekUndoName() != null) {
 					action.setText(getActionText());
+				}
 				action.setEnabled(true);
 			} else {
 				action.setEnabled(false);

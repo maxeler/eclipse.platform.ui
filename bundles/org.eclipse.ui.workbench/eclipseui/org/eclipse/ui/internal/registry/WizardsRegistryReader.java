@@ -39,7 +39,7 @@ import org.eclipse.ui.internal.dialogs.WorkbenchWizardElement;
  */
 public class WizardsRegistryReader extends RegistryReader {
 
-	private String pluginPoint;
+	private final String pluginPoint;
 
 	private WizardCollectionElement wizardElements = null;
 
@@ -70,20 +70,21 @@ public class WizardsRegistryReader extends RegistryReader {
 	private WorkbenchWizardElement[] primaryWizards = new WorkbenchWizardElement[0];
 
 	private static class CategoryNode {
-		private Category category;
+		private final Category category;
 
 		private String path;
 
 		CategoryNode(Category cat) {
 			category = cat;
-			path = ""; //$NON-NLS-1$
 			String[] categoryPath = category.getParentPath();
+			StringBuilder pathBuilder = new StringBuilder();
 			if (categoryPath != null) {
 				for (String parentPath : categoryPath) {
-					path += parentPath + '/';
+					pathBuilder.append(parentPath).append('/');
 				}
 			}
-			path += cat.getId();
+			pathBuilder.append(cat.getId());
+			path = pathBuilder.toString();
 		}
 
 		String getPath() {
@@ -96,7 +97,7 @@ public class WizardsRegistryReader extends RegistryReader {
 	}
 
 	private static final Comparator<CategoryNode> comparer = new Comparator<>() {
-		private Collator collator = Collator.getInstance();
+		private final Collator collator = Collator.getInstance();
 
 		@Override
 		public int compare(CategoryNode arg0, CategoryNode arg1) {
@@ -108,7 +109,7 @@ public class WizardsRegistryReader extends RegistryReader {
 
 	private boolean readAll = true;
 
-	private String plugin;
+	private final String plugin;
 
 	/**
 	 * Create an instance of this class.

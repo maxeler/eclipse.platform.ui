@@ -82,6 +82,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertFalse("One file should be selected by default", selected.isEmpty());
@@ -99,6 +102,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialElementSelections(asList(FILES.get("foo.txt")));
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 
@@ -119,6 +125,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Don't wait for full refresh - this test checks that invalid initial
+		// selections don't cause a selection before dialog is fully loaded
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertTrue("No file should be selected by default", selected.isEmpty());
@@ -135,6 +144,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialElementSelections(asList(FILES.get("foo.txt")));
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 
@@ -155,6 +167,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Don't wait for full refresh - this test checks that filtered initial
+		// selections don't cause a selection before dialog is fully loaded
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertTrue("No file should be selected by default", selected.isEmpty());
@@ -174,6 +189,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertEquals("The first file should be selected by default", asList(FILES.get("foo.txt")), selected);
@@ -191,6 +209,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialPattern("**");
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 
@@ -211,6 +232,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertEquals("One file should be selected by default", asList(FILES.get("foo.txt")), selected);
@@ -227,6 +251,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialElementSelections(asList(FILES.get("foo.txt")));
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 
@@ -247,6 +274,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Don't wait for full refresh - this test checks that invalid initial
+		// selections don't cause a selection before dialog is fully loaded
+
 		List<Object> selected = getSelectedItems(dialog);
 
 		assertTrue("No file should be selected by default", selected.isEmpty());
@@ -265,6 +295,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialElementSelections(asList(FILES.get("bar.txt"), "not an available item", FILES.get("foofoo")));
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 		Set<IFile> expectedSelection = new HashSet<>(asList(FILES.get("bar.txt"), FILES.get("foofoo")));
@@ -288,6 +321,9 @@ public class ResourceInitialSelectionTest {
 		dialog.open();
 		dialog.refresh();
 
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
+
 		List<Object> selected = getSelectedItems(dialog);
 		boolean initialElementsAreSelected = selected.containsAll(initialSelection)
 				&& initialSelection.containsAll(selected);
@@ -309,6 +345,9 @@ public class ResourceInitialSelectionTest {
 		dialog.setInitialElementSelections(asList(FILES.get("foo.txt"), FILES.get("bar.txt"), FILES.get("foofoo")));
 		dialog.open();
 		dialog.refresh();
+
+		// Wait for background refresh jobs to complete
+		waitForDialogRefresh();
 
 		List<Object> selected = getSelectedItems(dialog);
 		List<IFile> expectedSelection = asList(FILES.get("foo.txt"), FILES.get("bar.txt"));
@@ -365,10 +404,24 @@ public class ResourceInitialSelectionTest {
 			dialog.close();
 		}
 		if (project != null) {
+			// Process any pending UI events before cleanup
+			processUIEvents();
+			
 			try {
+				// Wait for decorator jobs to finish
 				Job.getJobManager().wakeUp(DecoratorManager.FAMILY_DECORATE);
 				Job.getJobManager().join(DecoratorManager.FAMILY_DECORATE, null);
-				project.delete(true, null);
+				
+				// Wait for any resource jobs that might be running
+				Job.getJobManager().join(ResourcesPlugin.FAMILY_MANUAL_REFRESH, null);
+				Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, null);
+				
+				// Process UI events again after joining jobs
+				processUIEvents();
+				
+				// Try to delete with proper progress monitor and retry mechanism
+				deleteProjectWithRetry(project);
+				
 			} catch (Exception e) {
 				// try to get a stacktrace which jobs still has project open so that it can not
 				// be deleted:
@@ -379,6 +432,92 @@ public class ResourceInitialSelectionTest {
 				}
 				throw e;
 			}
+		}
+	}
+
+	/**
+	 * Process any pending UI events.
+	 */
+	private void processUIEvents() {
+		Display display = Display.getCurrent();
+		if (display != null) {
+			while (display.readAndDispatch()) {
+				// Process all pending events
+			}
+		}
+	}
+
+	/**
+	 * Wait for dialog refresh jobs to complete and process UI events.
+	 * This ensures background jobs finish before assertions are made.
+	 */
+	private void waitForDialogRefresh() {
+		Display display = PlatformUI.getWorkbench().getDisplay();
+
+		// The dialog performs async operations (FilterHistoryJob → FilterJob →
+		// RefreshCacheJob → RefreshJob) to filter and populate the table after refresh()
+		// We need to wait for the table to be populated before checking selection state
+
+		// First wait for table to have items (up to 2 seconds)
+		DisplayHelper.waitForCondition(display, 2000, () -> {
+			processUIEvents();
+			try {
+				Table table = (Table) ((Composite) ((Composite) ((Composite) dialog.getShell().getChildren()[0])
+						.getChildren()[0]).getChildren()[0]).getChildren()[3];
+				return table.getItemCount() > 0;
+			} catch (Exception e) {
+				return false;
+			}
+		});
+
+		// Then wait additional time for selection to be applied
+		// The selection is set asynchronously after table population completes
+		// Previous fix used only 3 × 50ms = 150ms which was insufficient on slow systems
+		// Increased to handle slower machines while minimizing delay on fast ones
+		for (int i = 0; i < 5; i++) {
+			processUIEvents();
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				break;
+			}
+		}
+
+		// Final event loop processing
+		processUIEvents();
+	}
+
+	/**
+	 * Delete project with retry mechanism to handle cases where background jobs
+	 * are still using the project resources.
+	 */
+	private void deleteProjectWithRetry(IProject projectToDelete) throws CoreException {
+		final int MAX_RETRY = 5;
+		CoreException lastException = null;
+		
+		for (int i = 0; i < MAX_RETRY; i++) {
+			try {
+				projectToDelete.delete(true, true, new NullProgressMonitor());
+				return; // Success
+			} catch (CoreException e) {
+				lastException = e;
+				if (i < MAX_RETRY - 1) {
+					// Process UI events and wait before retrying
+					processUIEvents();
+					try {
+						Thread.sleep(1000); // Wait 1 second before retry
+					} catch (InterruptedException ie) {
+						Thread.currentThread().interrupt();
+						break;
+					}
+				}
+			}
+		}
+		
+		// If we get here, all retries failed
+		if (lastException != null) {
+			throw lastException;
 		}
 	}
 }

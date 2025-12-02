@@ -81,20 +81,27 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * Since 3.1 this implements the interface for IUndoableOperation.
 	 * </p>
 	 */
+	@Deprecated
 	class TextCommand extends AbstractOperation {
 
 		/** The start index of the replaced text. */
+		@Deprecated
 		protected int fStart= -1;
 		/** The end index of the replaced text. */
+		@Deprecated
 		protected int fEnd= -1;
 		/** The newly inserted text. */
+		@Deprecated
 		protected String fText;
 		/** The replaced text. */
+		@Deprecated
 		protected String fPreservedText;
 
 		/** The undo modification stamp. */
+		@Deprecated
 		protected long fUndoModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
 		/** The redo modification stamp. */
+		@Deprecated
 		protected long fRedoModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
 
 		/**
@@ -103,6 +110,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @param context the undo context for this command
 		 * @since 3.1
 		 */
+		@Deprecated
 		TextCommand(IUndoContext context) {
 			super(JFaceTextMessages.getString("DefaultUndoManager.operationLabel")); //$NON-NLS-1$
 			addContext(context);
@@ -111,6 +119,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		/**
 		 * Re-initializes this text command.
 		 */
+		@Deprecated
 		protected void reinitialize() {
 			fStart= fEnd= -1;
 			fText= fPreservedText= null;
@@ -124,6 +133,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @param start the start index
 		 * @param end the end index
 		 */
+		@Deprecated
 		protected void set(int start, int end) {
 			fStart= start;
 			fEnd= end;
@@ -131,6 +141,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			fPreservedText= null;
 		}
 
+		@Deprecated
 		@Override
 		public void dispose() {
 			reinitialize();
@@ -141,17 +152,20 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 *
 		 * @since 2.0
 		 */
+		@Deprecated
 		protected void undoTextChange() {
 			try {
 				IDocument document= fTextViewer.getDocument();
-				if (document instanceof IDocumentExtension4)
+				if (document instanceof IDocumentExtension4) {
 					((IDocumentExtension4)document).replace(fStart, fText.length(), fPreservedText, fUndoModificationStamp);
-				else
+				} else {
 					document.replace(fStart, fText.length(), fPreservedText);
+				}
 			} catch (BadLocationException x) {
 			}
 		}
 
+		@Deprecated
 		@Override
 		public boolean canUndo() {
 
@@ -206,6 +220,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			return false;
 		}
 
+		@Deprecated
 		@Override
 		public boolean canRedo() {
 			if (isConnected() && isValid()) {
@@ -221,11 +236,13 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			return false;
 		}
 
+		@Deprecated
 		@Override
 		public boolean canExecute() {
 			return isConnected();
 		}
 
+		@Deprecated
 		@Override
 		public IStatus execute(IProgressMonitor monitor, IAdaptable uiInfo) {
 			// Text commands execute as they are typed, so executing one has no effect.
@@ -245,6 +262,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @param uiInfo	an adaptable that can provide UI info if needed
 		 * @return the status
 		 */
+		@Deprecated
 		@Override
 		public IStatus undo(IProgressMonitor monitor, IAdaptable uiInfo) {
 			if (isValid()) {
@@ -261,13 +279,15 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 *
 		 * @since 2.0
 		 */
+		@Deprecated
 		protected void redoTextChange() {
 			try {
 				IDocument document= fTextViewer.getDocument();
-				if (document instanceof IDocumentExtension4)
+				if (document instanceof IDocumentExtension4) {
 					((IDocumentExtension4)document).replace(fStart, fEnd - fStart, fText, fRedoModificationStamp);
-				else
+				} else {
 					fTextViewer.getDocument().replace(fStart, fEnd - fStart, fText);
+				}
 			} catch (BadLocationException x) {
 			}
 		}
@@ -280,6 +300,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @param uiInfo	an adaptable that can provide UI info if needed
 		 * @return the status
 		 */
+		@Deprecated
 		@Override
 		public IStatus redo(IProgressMonitor monitor, IAdaptable uiInfo) {
 			if (isValid()) {
@@ -297,6 +318,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @since 3.1
 		 */
 
+		@Deprecated
 		protected void updateCommand() {
 			fText= fTextBuffer.toString();
 			fTextBuffer.setLength(0);
@@ -310,6 +332,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 *
 		 * @return a new, uncommitted text command or a compound text command
 		 */
+		@Deprecated
 		protected TextCommand createCurrent() {
 			return fFoldingIntoCompoundChange ? new CompoundTextCommand(fUndoContext) : new TextCommand(fUndoContext);
 		}
@@ -317,6 +340,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		/**
 		 * Commits the current change into this command.
 		 */
+		@Deprecated
 		protected void commit() {
 			if (fStart < 0) {
 				if (fFoldingIntoCompoundChange) {
@@ -337,6 +361,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 *
 		 * @since 3.1
 		 */
+		@Deprecated
 		protected void pretendCommit() {
 			if (fStart > -1) {
 				fText= fTextBuffer.toString();
@@ -352,6 +377,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * new fCurrent, false if not.
 		 * @since 3.1
 		 */
+		@Deprecated
 		protected boolean attemptCommit() {
 			pretendCommit();
 			if (isValid()) {
@@ -367,12 +393,14 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return <code>true</code> if the command is valid for undo or redo
 		 * @since 3.1
 		 */
+		@Deprecated
 		protected boolean isValid() {
 			return fStart > -1 &&
 				fEnd > -1 &&
 				fText != null;
 		}
 
+		@Deprecated
 		@Override
 		public String toString() {
 			String delimiter= ", "; //$NON-NLS-1$
@@ -405,6 +433,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return the undo modification stamp for this command
 		 * @since 3.1
 		 */
+		@Deprecated
 		protected long getUndoModificationStamp() {
 			return fUndoModificationStamp;
 		}
@@ -415,6 +444,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return the redo modification stamp for this command
 		 * @since 3.1
 		 */
+		@Deprecated
 		protected long getRedoModificationStamp() {
 			return fRedoModificationStamp;
 		}
@@ -424,10 +454,11 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * Represents an undo-able edit command consisting of several
 	 * individual edit commands.
 	 */
+	@Deprecated
 	class CompoundTextCommand extends TextCommand {
 
 		/** The list of individual commands */
-		private List<TextCommand> fCommands= new ArrayList<>();
+		private final List<TextCommand> fCommands= new ArrayList<>();
 
 		/**
 		 * Creates a new compound text command.
@@ -435,6 +466,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @param context the undo context for this command
 		 * @since 3.1
 		 */
+		@Deprecated
 		CompoundTextCommand(IUndoContext context) {
 			super(context);
 		}
@@ -444,10 +476,12 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 *
 		 * @param command the command to be added
 		 */
+		@Deprecated
 		protected void add(TextCommand command) {
 			fCommands.add(command);
 		}
 
+		@Deprecated
 		@Override
 		public IStatus undo(IProgressMonitor monitor, IAdaptable uiInfo) {
 			resetProcessChangeSate();
@@ -469,6 +503,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			return Status.OK_STATUS;
 		}
 
+		@Deprecated
 		@Override
 		public IStatus redo(IProgressMonitor monitor, IAdaptable uiInfo) {
 			resetProcessChangeSate();
@@ -494,6 +529,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 
 		 */
 
+		@Deprecated
 		@Override
 		protected void updateCommand() {
 			// first gather the data from the buffers
@@ -516,21 +552,25 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		/*
 		 * @see TextCommand#createCurrent
 		 */
+		@Deprecated
 		@Override
 		protected TextCommand createCurrent() {
 
-			if (!fFoldingIntoCompoundChange)
+			if (!fFoldingIntoCompoundChange) {
 				return new TextCommand(fUndoContext);
+			}
 
 			reinitialize();
 			return this;
 		}
 
+		@Deprecated
 		@Override
 		protected void commit() {
 			// if there is pending data, update the command
-			if (fStart > -1)
+			if (fStart > -1) {
 				updateCommand();
+			}
 			fCurrent= createCurrent();
 			resetProcessChangeSate();
 		}
@@ -541,10 +581,12 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return true if the command is valid.
 		 * @since 3.1
 		 */
+		@Deprecated
 		@Override
 		protected boolean isValid() {
-			if (isConnected())
+			if (isConnected()) {
 				return (fStart > -1 || !fCommands.isEmpty());
+			}
 			return false;
 		}
 
@@ -554,12 +596,14 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return the undo modification stamp
 		 * @since 3.1
 		 */
+		@Deprecated
 		@Override
 		protected long getUndoModificationStamp() {
-			if (fStart > -1)
+			if (fStart > -1) {
 				return super.getUndoModificationStamp();
-			else if (!fCommands.isEmpty())
+			} else if (!fCommands.isEmpty()) {
 				return fCommands.get(0).getUndoModificationStamp();
+			}
 
 			return fUndoModificationStamp;
 		}
@@ -570,12 +614,14 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * @return the redo modification stamp
 		 * @since 3.1
 		 */
+		@Deprecated
 		@Override
 		protected long getRedoModificationStamp() {
-			if (fStart > -1)
+			if (fStart > -1) {
 				return super.getRedoModificationStamp();
-			else if (!fCommands.isEmpty())
+			} else if (!fCommands.isEmpty()) {
 				return fCommands.get(fCommands.size()-1).getRedoModificationStamp();
+			}
 
 			return fRedoModificationStamp;
 		}
@@ -584,11 +630,13 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/**
 	 * Internal listener to mouse and key events.
 	 */
+	@Deprecated
 	class KeyAndMouseListener implements MouseListener, KeyListener {
 
 		/*
 		 * @see MouseListener#mouseDoubleClick
 		 */
+		@Deprecated
 		@Override
 		public void mouseDoubleClick(MouseEvent e) {
 		}
@@ -597,15 +645,18 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * If the right mouse button is pressed, the current editing command is closed
 		 * @see MouseListener#mouseDown
 		 */
+		@Deprecated
 		@Override
 		public void mouseDown(MouseEvent e) {
-			if (e.button == 1)
+			if (e.button == 1) {
 				commit();
+			}
 		}
 
 		/*
 		 * @see MouseListener#mouseUp
 		 */
+		@Deprecated
 		@Override
 		public void mouseUp(MouseEvent e) {
 		}
@@ -613,6 +664,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		/*
 		 * @see KeyListener#keyPressed
 		 */
+		@Deprecated
 		@Override
 		public void keyReleased(KeyEvent e) {
 		}
@@ -621,6 +673,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		 * On cursor keys, the current editing command is closed
 		 * @see KeyListener#keyPressed
 		 */
+		@Deprecated
 		@Override
 		public void keyPressed(KeyEvent e) {
 			switch (e.keyCode) {
@@ -637,10 +690,12 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/**
 	 * Internal listener to document changes.
 	 */
+	@Deprecated
 	class DocumentListener implements IDocumentListener {
 
 		private String fReplacedText;
 
+		@Deprecated
 		@Override
 		public void documentAboutToBeChanged(DocumentEvent event) {
 			try {
@@ -651,6 +706,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			}
 		}
 
+		@Deprecated
 		@Override
 		public void documentChanged(DocumentEvent event) {
 			fPreservedRedoModificationStamp= event.getModificationStamp();
@@ -659,8 +715,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			// top operation but changes state.
 			IUndoableOperation op= fHistory.getUndoOperation(fUndoContext);
 			boolean wasValid= false;
-			if (op != null)
+			if (op != null) {
 				wasValid= op.canUndo();
+			}
 			// Process the change, providing the before and after timestamps
 			processChange(event.getOffset(), event.getOffset() + event.getLength(), event.getText(), fReplacedText, fPreservedUndoModificationStamp, fPreservedRedoModificationStamp);
 
@@ -670,8 +727,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			if (op == fCurrent) {
 				// if the document change did not cause a new fCurrent to be created, then we should
 				// notify the history that the current operation changed if its validity has changed.
-				if (wasValid != fCurrent.isValid())
+				if (wasValid != fCurrent.isValid()) {
 					fHistory.operationChanged(op);
+				}
 			}
 			else {
 				// if the change created a new fCurrent that we did not yet add to the
@@ -686,8 +744,10 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/**
 	 * Internal text input listener.
 	 */
+	@Deprecated
 	class TextInputListener implements ITextInputListener {
 
+		@Deprecated
 		@Override
 		public void inputDocumentAboutToBeChanged(IDocument oldInput, IDocument newInput) {
 			if (oldInput != null && fDocumentListener != null) {
@@ -696,11 +756,13 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			}
 		}
 
+		@Deprecated
 		@Override
 		public void inputDocumentChanged(IDocument oldInput, IDocument newInput) {
 			if (newInput != null) {
-				if (fDocumentListener == null)
+				if (fDocumentListener == null) {
 					fDocumentListener= new DocumentListener();
+				}
 				newInput.addDocumentListener(fDocumentListener);
 			}
 		}
@@ -711,9 +773,11 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * @see IOperationHistoryListener
 	 * @since 3.1
 	 */
+	@Deprecated
 	class HistoryListener implements IOperationHistoryListener {
 		private IUndoableOperation fOperation;
 
+		@Deprecated
 		@Override
 		public void historyNotification(final OperationHistoryEvent event) {
 			final int type= event.getEventType();
@@ -726,8 +790,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 							// if we are undoing/redoing a command we generated, then ignore
 							// the document changes associated with this undo or redo.
 							if (event.getOperation() instanceof TextCommand) {
-								if (fTextViewer instanceof TextViewer)
+								if (fTextViewer instanceof TextViewer) {
 									((TextViewer) fTextViewer).ignoreAutoEditStrategies(true);
+								}
 								listenToTextChanges(false);
 
 								// in the undo case only, make sure compounds are closed
@@ -754,8 +819,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 						fTextViewer.getTextWidget().getDisplay().syncExec(() -> {
 							listenToTextChanges(true);
 							fOperation= null;
-							if (fTextViewer instanceof TextViewer)
+							if (fTextViewer instanceof TextViewer) {
 								((TextViewer) fTextViewer).ignoreAutoEditStrategies(false);
+							}
 						});
 				}
 				break;
@@ -769,8 +835,10 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/** Text buffer to collect viewer content which has been replaced */
 	private StringBuilder fPreservedTextBuffer;
 	/** The document modification stamp for undo. */
+	@Deprecated
 	protected long fPreservedUndoModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
 	/** The document modification stamp for redo. */
+	@Deprecated
 	protected long fPreservedRedoModificationStamp= IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP;
 	/** The internal key and mouse event listener */
 	private KeyAndMouseListener fKeyAndMouseListener;
@@ -801,7 +869,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * The undo context.
 	 * @since 3.1
 	 */
-	private IOperationHistory fHistory;
+	private final IOperationHistory fHistory;
 	/**
 	 * The operation history.
 	 * @since 3.1
@@ -812,7 +880,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * and after the individual commands are performed.
 	 * @since 3.1
 	 */
-	private IOperationHistoryListener fHistoryListener= new HistoryListener();
+	private final IOperationHistoryListener fHistoryListener= new HistoryListener();
 
 	/**
 	 * The command last added to the operation history.  This must be tracked
@@ -826,6 +894,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 *
 	 * @param undoLevel the length of this manager's history
 	 */
+	@Deprecated
 	public DefaultUndoManager(int undoLevel) {
 		fHistory= OperationHistoryFactory.getOperationHistory();
 		setMaximalUndoLevel(undoLevel);
@@ -844,6 +913,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/*
 	 * @see IUndoManager#beginCompoundChange
 	 */
+	@Deprecated
 	@Override
 	public void beginCompoundChange() {
 		if (isConnected()) {
@@ -856,6 +926,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	/*
 	 * @see IUndoManager#endCompoundChange
 	 */
+	@Deprecated
 	@Override
 	public void endCompoundChange() {
 		if (isConnected()) {
@@ -929,8 +1000,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * @since 3.1
 	 */
 	private void initializeCommandStack() {
-		if (fHistory != null && fUndoContext != null)
+		if (fHistory != null && fUndoContext != null) {
 			fHistory.dispose(fUndoContext, true, true, false);
+		}
 
 	}
 
@@ -962,8 +1034,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		// document change.
 		if (fLastAddedCommand != fCurrent) {
 			fCurrent.pretendCommit();
-			if (fCurrent.isValid())
+			if (fCurrent.isValid()) {
 				addToCommandStack(fCurrent);
+			}
 		}
 		fCurrent.commit();
 	}
@@ -988,8 +1061,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 */
 	private boolean isWhitespaceText(String text) {
 
-		if (text == null || text.isEmpty())
+		if (text == null || text.isEmpty()) {
 			return false;
+		}
 
 		String[] delimiters= fTextViewer.getDocument().getLegalLineDelimiters();
 		int index= TextUtilities.startsWith(delimiters, text);
@@ -998,8 +1072,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 			int length= text.length();
 			for (int i= delimiters[index].length(); i < length; i++) {
 				c= text.charAt(i);
-				if (c != ' ' && c != '\t')
+				if (c != ' ' && c != '\t') {
 					return false;
+				}
 			}
 			return true;
 		}
@@ -1009,17 +1084,20 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 
 	private void processChange(int modelStart, int modelEnd, String insertedText, String replacedText, long beforeChangeModificationStamp, long afterChangeModificationStamp) {
 
-		if (insertedText == null)
+		if (insertedText == null) {
 			insertedText= ""; //$NON-NLS-1$
+		}
 
-		if (replacedText == null)
+		if (replacedText == null) {
 			replacedText= ""; //$NON-NLS-1$
+		}
 
 		int length= insertedText.length();
 		int diff= modelEnd - modelStart;
 
-		if (fCurrent.fUndoModificationStamp == IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP)
+		if (fCurrent.fUndoModificationStamp == IDocumentExtension4.UNKNOWN_MODIFICATION_STAMP) {
 			fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+		}
 
 		// normalize
 		if (diff < 0) {
@@ -1034,26 +1112,31 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 				// by typing or whitespace
 				if (!fInserting || (modelStart != fCurrent.fStart + fTextBuffer.length())) {
 					fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-					if (fCurrent.attemptCommit())
+					if (fCurrent.attemptCommit()) {
 						fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+					}
 
 					fInserting= true;
 				}
-				if (fCurrent.fStart < 0)
+				if (fCurrent.fStart < 0) {
 					fCurrent.fStart= fCurrent.fEnd= modelStart;
-				if (length > 0)
+				}
+				if (length > 0) {
 					fTextBuffer.append(insertedText);
+				}
 			} else if (length >= 0) {
 				// by pasting or model manipulation
 				fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-				if (fCurrent.attemptCommit())
+				if (fCurrent.attemptCommit()) {
 					fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+				}
 
 				fCurrent.fStart= fCurrent.fEnd= modelStart;
 				fTextBuffer.append(insertedText);
 				fCurrent.fRedoModificationStamp= afterChangeModificationStamp;
-				if (fCurrent.attemptCommit())
+				if (fCurrent.attemptCommit()) {
 					fCurrent.fUndoModificationStamp= afterChangeModificationStamp;
+				}
 
 			}
 		} else {
@@ -1089,8 +1172,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 						// either DEL or backspace for the first time
 
 						fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-						if (fCurrent.attemptCommit())
+						if (fCurrent.attemptCommit()) {
 							fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+						}
 
 						// as we can not decide whether it was DEL or backspace we initialize for backspace
 						fPreservedTextBuffer.append(replacedText);
@@ -1103,8 +1187,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 				} else if (length > 0) {
 					// whereby selection is not empty
 					fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-					if (fCurrent.attemptCommit())
+					if (fCurrent.attemptCommit()) {
 						fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+					}
 
 					fCurrent.fStart= modelStart;
 					fCurrent.fEnd= modelEnd;
@@ -1121,14 +1206,16 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 						// because of overwrite mode or model manipulation
 						if (!fOverwriting || (modelStart != fCurrent.fStart +  fTextBuffer.length())) {
 							fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-							if (fCurrent.attemptCommit())
+							if (fCurrent.attemptCommit()) {
 								fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+							}
 
 							fOverwriting= true;
 						}
 
-						if (fCurrent.fStart < 0)
+						if (fCurrent.fStart < 0) {
 							fCurrent.fStart= modelStart;
+						}
 
 						fCurrent.fEnd= modelEnd;
 						fTextBuffer.append(insertedText);
@@ -1139,8 +1226,9 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 				}
 				// because of typing or pasting whereby selection is not empty
 				fCurrent.fRedoModificationStamp= beforeChangeModificationStamp;
-				if (fCurrent.attemptCommit())
+				if (fCurrent.attemptCommit()) {
 					fCurrent.fUndoModificationStamp= beforeChangeModificationStamp;
+				}
 
 				fCurrent.fStart= modelStart;
 				fCurrent.fEnd= modelEnd;
@@ -1163,22 +1251,25 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		Shell shell= null;
 		if (isConnected()) {
 			StyledText st= fTextViewer.getTextWidget();
-			if (st != null && !st.isDisposed())
+			if (st != null && !st.isDisposed()) {
 				shell= st.getShell();
+			}
 		}
-		if (Display.getCurrent() != null)
+		if (Display.getCurrent() != null) {
 			MessageDialog.openError(shell, title, ex.getLocalizedMessage());
-		else {
+		} else {
 			Display display;
 			final Shell finalShell= shell;
-			if (finalShell != null)
+			if (finalShell != null) {
 				display= finalShell.getDisplay();
-			else
+			} else {
 				display= Display.getDefault();
+			}
 			display.syncExec(() -> MessageDialog.openError(finalShell, title, ex.getLocalizedMessage()));
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void setMaximalUndoLevel(int undoLevel) {
 		fUndoLevel= Math.max(0, undoLevel);
@@ -1187,14 +1278,16 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void connect(ITextViewer textViewer) {
 		if (!isConnected() && textViewer != null) {
 			fTextViewer= textViewer;
 			fTextBuffer= new StringBuilder();
 			fPreservedTextBuffer= new StringBuilder();
-			if (fUndoContext == null)
+			if (fUndoContext == null) {
 				fUndoContext= new ObjectUndoContext(this);
+			}
 
 			fHistory.setLimit(fUndoContext, fUndoLevel);
 
@@ -1208,6 +1301,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void disconnect() {
 		if (isConnected()) {
@@ -1223,6 +1317,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void reset() {
 		if (isConnected()) {
@@ -1238,16 +1333,19 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public boolean redoable() {
 		return fHistory.canRedo(fUndoContext);
 	}
 
+	@Deprecated
 	@Override
 	public boolean undoable() {
 		return fHistory.canUndo(fUndoContext);
 	}
 
+	@Deprecated
 	@Override
 	public void redo() {
 		if (isConnected() && redoable()) {
@@ -1259,6 +1357,7 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void undo() {
 		if (isConnected() && undoable()) {
@@ -1277,17 +1376,19 @@ public class DefaultUndoManager implements IUndoManager, IUndoManagerExtension {
 	 * @param length the length of the range
 	 * @since 3.0
 	 */
+	@Deprecated
 	protected void selectAndReveal(int offset, int length) {
-		if (fTextViewer instanceof ITextViewerExtension5) {
-			ITextViewerExtension5 extension= (ITextViewerExtension5) fTextViewer;
+		if (fTextViewer instanceof ITextViewerExtension5 extension) {
 			extension.exposeModelRange(new Region(offset, length));
-		} else if (!fTextViewer.overlapsWithVisibleRegion(offset, length))
+		} else if (!fTextViewer.overlapsWithVisibleRegion(offset, length)) {
 			fTextViewer.resetVisibleRegion();
+		}
 
 		fTextViewer.setSelectedRange(offset, length);
 		fTextViewer.revealRange(offset, length);
 	}
 
+	@Deprecated
 	@Override
 	public IUndoContext getUndoContext() {
 		return fUndoContext;

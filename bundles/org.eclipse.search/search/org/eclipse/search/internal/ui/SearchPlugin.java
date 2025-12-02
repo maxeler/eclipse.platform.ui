@@ -35,9 +35,6 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceDescription;
 import org.eclipse.core.resources.ResourcesPlugin;
 
-import org.eclipse.jface.action.GroupMarker;
-import org.eclipse.jface.action.IMenuManager;
-import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.IDialogSettings;
 
 import org.eclipse.ui.IWorkbenchPage;
@@ -48,7 +45,6 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.search.internal.core.SearchCorePlugin;
 import org.eclipse.search.internal.core.text.TextSearchEngineRegistry;
 import org.eclipse.search.internal.ui.util.ExceptionHandler;
-import org.eclipse.search.ui.IContextMenuConstants;
 import org.eclipse.search.ui.NewSearchUI;
 
 import org.eclipse.search2.internal.ui.InternalSearchUI;
@@ -129,8 +125,9 @@ public class SearchPlugin extends AbstractUIPlugin {
 	private static void setActiveWorkbenchWindow(WindowRef windowRef) {
 		windowRef.window= null;
 		Display display= Display.getCurrent();
-		if (display == null)
+		if (display == null) {
 			return;
+		}
 		Control shell= display.getActiveShell();
 		while (shell != null) {
 			Object data= shell.getData();
@@ -155,8 +152,9 @@ public class SearchPlugin extends AbstractUIPlugin {
 	 */
 	public static Shell getActiveWorkbenchShell() {
 		IWorkbenchWindow window= getActiveWorkbenchWindow();
-		if (window != null)
+		if (window != null) {
 			return window.getShell();
+		}
 		return null;
 	}
 
@@ -231,8 +229,9 @@ public class SearchPlugin extends AbstractUIPlugin {
 		List<SearchPageDescriptor> enabledDescriptors= new ArrayList<>(5);
 		while (iter.hasNext()) {
 			SearchPageDescriptor desc= iter.next();
-			if (desc.isEnabled() || desc.getId().equals(pageId))
+			if (desc.isEnabled() || desc.getId().equals(pageId)) {
 				enabledDescriptors.add(desc);
+			}
 		}
 		return enabledDescriptors;
 	}
@@ -285,8 +284,9 @@ public class SearchPlugin extends AbstractUIPlugin {
 	private List<SorterDescriptor> createSorterDescriptors(IConfigurationElement[] elements) {
 		List<SorterDescriptor> result= new ArrayList<>(5);
 		for (IConfigurationElement element : elements) {
-			if (SorterDescriptor.SORTER_TAG.equals(element.getName()))
+			if (SorterDescriptor.SORTER_TAG.equals(element.getName())) {
 				result.add(new SorterDescriptor(element));
+			}
 		}
 		return result;
 	}
@@ -315,29 +315,5 @@ public class SearchPlugin extends AbstractUIPlugin {
 
 	public static String getID() {
 		return NewSearchUI.PLUGIN_ID;
-	}
-
-	/**
-	 * Creates the Search plugin standard groups in a context menu.
-	 *
-	 * @param menu the menu to create in
-	 * @deprecated old search
-	 */
-	@Deprecated
-	public static void createStandardGroups(IMenuManager menu) {
-		if (!menu.isEmpty())
-			return;
-		menu.add(new Separator(IContextMenuConstants.GROUP_NEW));
-		menu.add(new GroupMarker(IContextMenuConstants.GROUP_GOTO));
-		menu.add(new GroupMarker(IContextMenuConstants.GROUP_OPEN));
-		menu.add(new Separator(IContextMenuConstants.GROUP_SHOW));
-		menu.add(new Separator(IContextMenuConstants.GROUP_BUILD));
-		menu.add(new Separator(IContextMenuConstants.GROUP_REORGANIZE));
-		menu.add(new Separator(IContextMenuConstants.GROUP_REMOVE_MATCHES));
-		menu.add(new GroupMarker(IContextMenuConstants.GROUP_GENERATE));
-		menu.add(new Separator(IContextMenuConstants.GROUP_SEARCH));
-		menu.add(new Separator(IContextMenuConstants.GROUP_ADDITIONS));
-		menu.add(new Separator(IContextMenuConstants.GROUP_VIEWER_SETUP));
-		menu.add(new Separator(IContextMenuConstants.GROUP_PROPERTIES));
 	}
 }

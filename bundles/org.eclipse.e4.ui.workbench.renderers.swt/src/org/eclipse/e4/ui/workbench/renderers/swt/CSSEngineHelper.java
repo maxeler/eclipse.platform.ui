@@ -25,8 +25,8 @@ import org.w3c.dom.css.CSSValue;
  * used by renderers.
  */
 public class CSSEngineHelper {
-	private IEclipseContext context;
-	private Control control;
+	private final IEclipseContext context;
+	private final Control control;
 	private IStylingEngine engine;
 	private CSSStyleDeclaration style;
 
@@ -54,8 +54,9 @@ public class CSSEngineHelper {
 	 * @return the margin in pixels
 	 */
 	public int getMarginBottom(int defaultValue) {
-		if (style == null)
+		if (style == null) {
 			return defaultValue;
+		}
 		return getPxValue(
 				style.getPropertyCSSValue("margin-bottom"), defaultValue); //$NON-NLS-1$
 	}
@@ -67,8 +68,9 @@ public class CSSEngineHelper {
 	 * @return the margin in pixels
 	 */
 	public int getMarginTop(int defaultValue) {
-		if (style == null)
+		if (style == null) {
 			return defaultValue;
+		}
 		return getPxValue(style.getPropertyCSSValue("margin-top"), defaultValue); //$NON-NLS-1$
 	}
 
@@ -79,8 +81,9 @@ public class CSSEngineHelper {
 	 * @return the margin in pixels
 	 */
 	public int getMarginLeft(int defaultValue) {
-		if (style == null)
+		if (style == null) {
 			return defaultValue;
+		}
 		return getPxValue(
 				style.getPropertyCSSValue("margin-left"), defaultValue); //$NON-NLS-1$
 	}
@@ -92,8 +95,9 @@ public class CSSEngineHelper {
 	 * @return the margin in pixels
 	 */
 	public int getMarginRight(int defaultValue) {
-		if (style == null)
+		if (style == null) {
 			return defaultValue;
+		}
 		return getPxValue(
 				style.getPropertyCSSValue("margin-right"), defaultValue); //$NON-NLS-1$
 	}

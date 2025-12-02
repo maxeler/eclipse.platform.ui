@@ -52,7 +52,7 @@ import org.eclipse.ltk.internal.ui.refactoring.UndoManagerAction;
  *
  * @noextend This class is not intended to be subclassed by clients.
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "2025-12")
 public class RedoRefactoringAction extends UndoManagerAction {
 
 	private int fPatternLength;
@@ -60,14 +60,17 @@ public class RedoRefactoringAction extends UndoManagerAction {
 	/**
 	 * Creates a new redo refactoring action.
 	 */
+	@Deprecated
 	public RedoRefactoringAction() {
 	}
 
+	@Deprecated
 	@Override
 	protected String getName() {
 		return RefactoringUIMessages.RedoRefactoringAction_name;
 	}
 
+	@Deprecated
 	@Override
 	protected IRunnableWithProgress createOperation(Shell parent) {
 		final IValidationCheckResultQuery query= new Query(parent, RefactoringUIMessages.RedoRefactoringAction_error_title) {
@@ -87,14 +90,16 @@ public class RedoRefactoringAction extends UndoManagerAction {
 		};
 	}
 
+	@Deprecated
 	@Override
 	protected UndoManagerAdapter createUndoManagerListener() {
 		return new UndoManagerAdapter() {
 			@Override
 			public void redoStackChanged(IUndoManager manager) {
 				IAction action= getAction();
-				if (action == null)
+				if (action == null) {
 					return;
+				}
 				boolean enabled= false;
 				String text= null;
 				if (manager.anythingToRedo()) {
@@ -109,6 +114,7 @@ public class RedoRefactoringAction extends UndoManagerAction {
 		};
 	}
 
+	@Deprecated
 	@Override
 	public void selectionChanged(IAction action, ISelection s) {
 		if (!isHooked()) {
@@ -116,8 +122,9 @@ public class RedoRefactoringAction extends UndoManagerAction {
 			fPatternLength= RefactoringUIMessages.RedoRefactoringAction_extendedLabel.length();
 			IUndoManager undoManager = RefactoringCore.getUndoManager();
 			if (undoManager.anythingToRedo()) {
-				if (undoManager.peekRedoName() != null)
+				if (undoManager.peekRedoName() != null) {
 					action.setText(getActionText());
+				}
 				action.setEnabled(true);
 			} else {
 				action.setEnabled(false);

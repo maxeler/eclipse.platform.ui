@@ -223,6 +223,8 @@ public class ProgressContantsTest extends ProgressTestCase {
 			errorJob.schedule();
 			processEventsUntil(() -> findProgressInfoItem(errorJob) != null, 3000);
 		}
+		// Wait for KEEPONE cleanup to stabilize at exactly 1 item
+		processEventsUntil(() -> countBelongingProgressItems(DummyFamilyJob.class) == 1, 3000);
 
 		assertEquals("Only one finished job should be kept in view", 1,
 				countBelongingProgressItems(DummyFamilyJob.class));
@@ -242,16 +244,20 @@ public class ProgressContantsTest extends ProgressTestCase {
 			job.schedule();
 		}
 		// ensure all jobs are started before ending all at the same time
-		processEventsUntil(null, 500);
+		processEventsUntil(() -> jobs.stream().allMatch(job -> job.inProgress), 3000);
 		for (DummyJob job : jobs) {
 			job.shouldFinish = true;
 		}
 		joinJobs(jobs, 10, TimeUnit.SECONDS);
+		// Process events to ensure job completion events are handled
+		processEvents();
 		{
 			DummyJob errorJob = new DummyJob("Last Job", new Status(IStatus.ERROR, TestPlugin.PLUGIN_ID, "error"));
 			errorJob.schedule();
 			processEventsUntil(() -> findProgressInfoItem(errorJob) != null, 3000);
 		}
+		// Wait for KEEPONE cleanup to stabilize at exactly 1 item
+		processEventsUntil(() -> countBelongingProgressItems(DummyFamilyJob.class) == 1, 5000);
 
 		assertEquals("Only one finished job should be kept in view", 1,
 				countBelongingProgressItems(DummyFamilyJob.class));

@@ -24,11 +24,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.commands.operations.IUndoContext;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Adapters;
 import org.eclipse.core.runtime.Assert;
@@ -239,8 +242,9 @@ public class ExtendedMarkersView extends ViewPart {
 	 *            {@link Collection} of {@link IMarker}
 	 */
 	private void addMarkers(MarkerSupportItem markerItem, Collection<IMarker> allMarkers) {
-		if (markerItem.getMarker() != null)
+		if (markerItem.getMarker() != null) {
 			allMarkers.add(markerItem.getMarker());
+		}
 		MarkerSupportItem[] children = markerItem.getChildren();
 		for (MarkerSupportItem element : children) {
 			addMarkers(element, allMarkers);
@@ -292,9 +296,9 @@ public class ExtendedMarkersView extends ViewPart {
 		for (int i = 0; i < fields.length; i++) {
 			MarkerField markerField = fields[i];
 			TreeViewerColumn column = null;
-			if (i < currentColumns.length)
+			if (i < currentColumns.length) {
 				column = new TreeViewerColumn(viewer, currentColumns[i]);
-			else {
+			} else {
 				column = new TreeViewerColumn(viewer, SWT.NONE);
 				column.getColumn().setResizable(true);
 				column.getColumn().setMoveable(true);
@@ -310,11 +314,13 @@ public class ExtendedMarkersView extends ViewPart {
 			column.getColumn().setImage(markerField.getColumnHeaderImage());
 
 			EditingSupport support = markerField.getEditingSupport(viewer);
-			if (support != null)
+			if (support != null) {
 				column.setEditingSupport(support);
+			}
 
-			if (builder.getPrimarySortField().equals(markerField))
+			if (builder.getPrimarySortField().equals(markerField)) {
 				updateDirectionIndicator(column.getColumn(), markerField);
+			}
 
 			IMemento columnWidths = null;
 			if (memento != null){
@@ -332,11 +338,12 @@ public class ExtendedMarkersView extends ViewPart {
 			}
 			// Take trim into account if we are using the default value, but not
 			// if it is restored.
-			if (columnWidth < 0)
+			if (columnWidth < 0) {
 				layout.addColumnData(new ColumnPixelData(markerField
 						.getDefaultColumnWidth(tree), true, true));
-			else
+			} else {
 				layout.addColumnData(new ColumnPixelData(columnWidth, true));
+			}
 		}
 
 		// Remove extra columns
@@ -392,8 +399,9 @@ public class ExtendedMarkersView extends ViewPart {
 						.getConfigurationElement().getAttribute(
 								MarkerSupportInternalUtilities.ATTRIBUTE_ID));
 				// Make sure we get a useful value
-				if (value != null && value.intValue() >= 0)
+				if (value != null && value.intValue() >= 0) {
 					preferredWidth = value.intValue();
+				}
 			}
 		}
 		if (preferredWidth <= 0) {
@@ -465,8 +473,7 @@ public class ExtendedMarkersView extends ViewPart {
 	private void addDoubleClickListener() {
 		viewer.addDoubleClickListener(event -> {
 			ISelection selection = event.getSelection();
-			if(selection instanceof ITreeSelection) {
-				ITreeSelection ss = (ITreeSelection) selection;
+			if(selection instanceof ITreeSelection ss) {
 				if(ss.size() == 1) {
 					Object obj = ss.getFirstElement();
 					if(viewer.isExpandable(obj)) {
@@ -501,8 +508,9 @@ public class ExtendedMarkersView extends ViewPart {
 		// Set help on the view itself
 		viewer.getControl().addHelpListener(e -> {
 			IContextProvider provider = Adapters.adapt(ExtendedMarkersView.this, IContextProvider.class);
-			if (provider == null)
+			if (provider == null) {
 				return;
+			}
 
 			IContext context = provider.getContext(viewer.getControl());
 			PlatformUI.getWorkbench().getHelpSystem().displayHelp(context);
@@ -585,10 +593,12 @@ public class ExtendedMarkersView extends ViewPart {
 
 		builder.dispose();
 		generator.dispose();
-		if (instanceCount > 1)
+		if (instanceCount > 1) {
 			instanceCount--;
-		if (clipboard != null)
+		}
+		if (clipboard != null) {
 			clipboard.dispose();
+		}
 
 		getSite().getPage().removePostSelectionListener(pageSelectionListener);
 		getSite().getPage().removePartListener(partListener);
@@ -924,7 +934,7 @@ public class ExtendedMarkersView extends ViewPart {
 			return message;
 		}
 		return NLS.bind(MarkerMessages.problem_filter_matchedMessage,
-				new Object[] { message, filteredCount, totalCount });
+				message, filteredCount, totalCount);
 	}
 
 	/**
@@ -1626,8 +1636,7 @@ public class ExtendedMarkersView extends ViewPart {
 
 			// get Objects to adapt
 			List<Object> objectsToAdapt = new ArrayList<>();
-			if (part instanceof IEditorPart) {
-				IEditorPart editor = (IEditorPart) part;
+			if (part instanceof IEditorPart editor) {
 				objectsToAdapt.add(editor.getEditorInput());
 			} else if (selection instanceof IStructuredSelection) {
 				for (Object object : (IStructuredSelection) selection) {
@@ -1636,16 +1645,35 @@ public class ExtendedMarkersView extends ViewPart {
 			}
 			// try to adapt them in resources and add it to the
 			// selectedElements
-			List<Object> selectedElements = new ArrayList<>();
+			Set<Object> selectedElements = new LinkedHashSet<>();
 			for (Object object : objectsToAdapt) {
 				Object resElement = MarkerResourceUtil.adapt2ResourceElement(object);
 				if (resElement != null) {
 					selectedElements.add(resElement);
 				}
 			}
+			if (isProjectNestingActive(part)) {
+				List<IProject> selectedProjects = selectedElements.stream().filter(IProject.class::isInstance)
+						.map(IProject.class::cast).toList();
+				if (!selectedProjects.isEmpty()) {
+					selectedElements.addAll(MarkerResourceUtil.getNestedChildProjects(selectedProjects));
+				}
+			}
 			MarkerContentGenerator gen = view.getGenerator();
 			gen.updateSelectedResource(selectedElements.toArray(), part == null);
 		}
+
+	}
+
+	/**
+	 * Check if project nesting is active for this marker view
+	 *
+	 * @param part the currently selected part
+	 * @return <code>true</code> if nesting should be performed, <code>false</code>
+	 *         otherwise
+	 */
+	protected boolean isProjectNestingActive(IWorkbenchPart part) {
+		return false;
 	}
 
 	/**

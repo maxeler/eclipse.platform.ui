@@ -59,6 +59,7 @@ public class TextEditorPreferencePage extends FieldEditorPreferencePage implemen
 	/**
 	 * Creates and returns the text editor preference page.
 	 */
+	@Deprecated
 	public TextEditorPreferencePage() {
 		super(GRID);
 
@@ -66,17 +67,20 @@ public class TextEditorPreferencePage extends FieldEditorPreferencePage implemen
 		setPreferenceStore(new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.eclipse.ui.workbench")); //$NON-NLS-1$
 	}
 
+	@Deprecated
 	@Override
 	public void createControl(Composite parent) {
 		super.createControl(parent);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(getControl(), ITextEditorHelpContextIds.TEXT_EDITOR_PREFERENCE_PAGE);
 	}
 
+	@Deprecated
 	@Override
 	public void createFieldEditors() {
 		addField(new FontFieldEditor(JFaceResources.TEXT_FONT, TextEditorMessages.PreferencePage_fontEditor, getFieldEditorParent()));
 	}
 
+	@Deprecated
 	@Override
 	public void init(IWorkbench workbench) {
 	}
@@ -87,18 +91,21 @@ public class TextEditorPreferencePage extends FieldEditorPreferencePage implemen
 	 * @param store the preference store
 	 * @since 2.0
 	 */
+	@Deprecated
 	public static void initDefaults(IPreferenceStore store) {
 
-		if (fgInitialized)
+		if (fgInitialized) {
 			return;
+		}
 
 		fgInitialized= true;
 
 		Font font= JFaceResources.getTextFont();
 		if (font != null) {
 			FontData[] data= font.getFontData();
-			if (data != null && data.length > 0)
+			if (data != null && data.length > 0) {
 				PreferenceConverter.setDefault(store, JFaceResources.TEXT_FONT, data[0]);
+			}
 		}
 
 		Display display= Display.getDefault();

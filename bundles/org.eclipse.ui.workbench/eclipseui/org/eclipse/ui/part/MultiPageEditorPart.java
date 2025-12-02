@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -145,13 +145,15 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 * here, in addition to using get/setData on the items, because dispose() needs
 	 * to access them, but widgetry has already been disposed at that point.
 	 */
-	private ArrayList<IEditorPart> nestedEditors = new ArrayList<>(3);
+	private final ArrayList<IEditorPart> nestedEditors = new ArrayList<>(3);
 
-	private List<IServiceLocator> pageSites = new ArrayList<>(3);
+	private final List<IServiceLocator> pageSites = new ArrayList<>(3);
 
 	private IServiceLocator pageContainerSite;
 
-	private ListenerList<IPageChangedListener> pageChangeListeners = new ListenerList<>(ListenerList.IDENTITY);
+	private final ListenerList<IPageChangedListener> pageChangeListeners = new ListenerList<>(ListenerList.IDENTITY);
+
+	private org.eclipse.jface.util.IPropertyChangeListener propertyChangeListenerToUpdateContainer;
 
 	/**
 	 * Creates an empty multi-page editor with no pages and registers a
@@ -160,11 +162,12 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 */
 	protected MultiPageEditorPart() {
 		super();
-		getAPIPreferenceStore().addPropertyChangeListener(event -> {
+		propertyChangeListenerToUpdateContainer = event -> {
 			if (isUpdateRequired(event)) {
 				updateContainer();
 			}
-		});
+		};
+		getAPIPreferenceStore().addPropertyChangeListener(propertyChangeListenerToUpdateContainer);
 	}
 
 	/**
@@ -304,12 +307,15 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 				e.detail = SWT.TRAVERSE_NONE;
 				Control control = newContainer.getParent();
 				do {
-					if (control.traverse(detail))
+					if (control.traverse(detail)) {
 						return;
-					if (control.getListeners(SWT.Traverse).length != 0)
+					}
+					if (control.getListeners(SWT.Traverse).length != 0) {
 						return;
-					if (control instanceof Shell)
+					}
+					if (control instanceof Shell) {
 						return;
+					}
 					control = control.getParent();
 				} while (control != null);
 			}
@@ -422,8 +428,9 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			@Override
 			public ImageDescriptor getImageDescriptor(Object page) {
 				Image image = getPageImage(((Integer) page).intValue());
-				if (image == null)
+				if (image == null) {
 					return null;
+				}
 
 				return ImageDescriptor.createFromImage(image);
 			}
@@ -456,12 +463,14 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			@Override
 			public Object execute(ExecutionEvent event) throws ExecutionException {
 				int n = getPageCount();
-				if (n == 0)
+				if (n == 0) {
 					return null;
+				}
 
 				int i = getActivePage() + 1;
-				if (i >= n)
+				if (i >= n) {
 					i = 0;
+				}
 				setActivePage(i);
 				return null;
 			}
@@ -476,12 +485,14 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			@Override
 			public Object execute(ExecutionEvent event) throws ExecutionException {
 				int n = getPageCount();
-				if (n == 0)
+				if (n == 0) {
 					return null;
+				}
 
 				int i = getActivePage() - 1;
-				if (i < 0)
+				if (i < 0) {
 					i = n - 1;
+				}
 				setActivePage(i);
 				return null;
 			}
@@ -526,6 +537,11 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 */
 	@Override
 	public void dispose() {
+		IPreferenceStore store = getAPIPreferenceStore();
+		if (propertyChangeListenerToUpdateContainer != null) {
+			store.removePropertyChangeListener(propertyChangeListenerToUpdateContainer);
+			propertyChangeListenerToUpdateContainer = null;
+		}
 		if (getSite() != null) {
 			deactivateSite(true, false);
 		}
@@ -632,11 +648,8 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 	 */
 	protected IEditorPart getEditor(int pageIndex) {
 		Item item = getItem(pageIndex);
-		if (item != null) {
-			Object data = item.getData();
-			if (data instanceof IEditorPart) {
-				return (IEditorPart) data;
-			}
+		if (item != null && !item.isDisposed() && item.getData() instanceof IEditorPart ep) {
+			return ep;
 		}
 		return null;
 	}
@@ -859,11 +872,10 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			ISelectionProvider selectionProvider = activeEditor.getSite().getSelectionProvider();
 			if (selectionProvider != null) {
 				ISelectionProvider outerProvider = getSite().getSelectionProvider();
-				if (outerProvider instanceof MultiPageSelectionProvider) {
+				if (outerProvider instanceof MultiPageSelectionProvider provider) {
 					SelectionChangedEvent event = new SelectionChangedEvent(selectionProvider,
 							selectionProvider.getSelection());
 
-					MultiPageSelectionProvider provider = (MultiPageSelectionProvider) outerProvider;
 					provider.fireSelectionChanged(event);
 					provider.firePostSelectionChanged(event);
 				} else if (Policy.DEBUG_MPE) {
@@ -915,8 +927,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 		final IKeyBindingService service = getSite().getKeyBindingService();
 		if (pageIndex < 0 || pageIndex >= getPageCount() || immediate) {
 			// There is no selected page, so deactivate the active service.
-			if (service instanceof INestableKeyBindingService) {
-				final INestableKeyBindingService nestableService = (INestableKeyBindingService) service;
+			if (service instanceof final INestableKeyBindingService nestableService) {
 				nestableService.activateKeyBindingService(null);
 			} else {
 				WorkbenchPlugin.log(
@@ -964,8 +975,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 
 		if (editor != null) {
 			// active the service for this inner editor
-			if (service instanceof INestableKeyBindingService) {
-				final INestableKeyBindingService nestableService = (INestableKeyBindingService) service;
+			if (service instanceof final INestableKeyBindingService nestableService) {
 				nestableService.activateKeyBindingService(editor.getEditorSite());
 
 			} else {
@@ -984,8 +994,7 @@ public abstract class MultiPageEditorPart extends EditorPart implements IPageCha
 			Item item = getItem(pageIndex);
 
 			// There is no selected editor, so deactivate the active service.
-			if (service instanceof INestableKeyBindingService) {
-				final INestableKeyBindingService nestableService = (INestableKeyBindingService) service;
+			if (service instanceof final INestableKeyBindingService nestableService) {
 				nestableService.activateKeyBindingService(null);
 			} else {
 				WorkbenchPlugin.log(

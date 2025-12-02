@@ -13,6 +13,9 @@
  *******************************************************************************/
 package org.eclipse.ui.tests.harness.util;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.SWTException;
 import org.eclipse.swt.widgets.Display;
@@ -43,6 +46,10 @@ public class RCPTestWorkbenchAdvisor extends WorkbenchAdvisor {
 	public static volatile Boolean asyncWithoutDisplayAccess = null;
 
 	private static boolean started = false;
+
+	// CountDownLatch to wait for async/sync operations with DisplayAccess to complete
+	// We need to wait for 2 operations: asyncWithDisplayAccess and syncWithDisplayAccess
+	private static CountDownLatch displayAccessLatch = null;
 
 	public static boolean isSTARTED() {
 		synchronized (RCPTestWorkbenchAdvisor.class) {
@@ -122,12 +129,13 @@ public class RCPTestWorkbenchAdvisor extends WorkbenchAdvisor {
 	public void preStartup() {
 		super.preStartup();
 		final Display display = Display.getCurrent();
+
+		// Initialize the latch to wait for 2 operations with DisplayAccess
+		displayAccessLatch = new CountDownLatch(2);
+
 		if (display != null) {
 			display.asyncExec(() -> {
-				if (isSTARTED())
-					asyncDuringStartup = Boolean.FALSE;
-				else
-					asyncDuringStartup = Boolean.TRUE;
+				asyncDuringStartup = !isSTARTED();
 			});
 		}
 
@@ -158,17 +166,23 @@ public class RCPTestWorkbenchAdvisor extends WorkbenchAdvisor {
 					DisplayAccess.accessDisplayDuringStartup();
 				try {
 					display.syncExec(() -> {
-						synchronized (RCPTestWorkbenchAdvisor.class) {
-							if (callDisplayAccess)
-								syncWithDisplayAccess = !isSTARTED() ? Boolean.TRUE : Boolean.FALSE;
-							else
-								syncWithoutDisplayAccess = !isSTARTED() ? Boolean.TRUE : Boolean.FALSE;
+						if (callDisplayAccess) {
+							syncWithDisplayAccess = !isSTARTED();
+							// Count down after the runnable executes
+							if (displayAccessLatch != null) {
+								displayAccessLatch.countDown();
+							}
+						} else {
+							syncWithoutDisplayAccess = !isSTARTED();
 						}
 					});
 				} catch (SWTException e) {
 					// this can happen because we shut down the workbench just
 					// as soon as we're initialized - ie: when we're trying to
 					// run this runnable in the deferred case.
+					if (callDisplayAccess && displayAccessLatch != null) {
+						displayAccessLatch.countDown();
+					}
 				}
 			}
 		};
@@ -183,11 +197,14 @@ public class RCPTestWorkbenchAdvisor extends WorkbenchAdvisor {
 				if (callDisplayAccess)
 					DisplayAccess.accessDisplayDuringStartup();
 				display.asyncExec(() -> {
-					synchronized (RCPTestWorkbenchAdvisor.class) {
-						if (callDisplayAccess)
-							asyncWithDisplayAccess = !isSTARTED() ? Boolean.TRUE : Boolean.FALSE;
-						else
-							asyncWithoutDisplayAccess = !isSTARTED() ? Boolean.TRUE : Boolean.FALSE;
+					if (callDisplayAccess) {
+						asyncWithDisplayAccess = !isSTARTED();
+						// Count down after the runnable executes
+						if (displayAccessLatch != null) {
+							displayAccessLatch.countDown();
+						}
+					} else {
+						asyncWithoutDisplayAccess = !isSTARTED();
 					}
 				});
 			}
@@ -199,6 +216,24 @@ public class RCPTestWorkbenchAdvisor extends WorkbenchAdvisor {
 	@Override
 	public void postStartup() {
 		super.postStartup();
+
+		// Wait for async/sync operations with DisplayAccess to complete execution
+		if (displayAccessLatch != null) {
+			try {
+				// Wait up to 5 seconds for operations with DisplayAccess to complete
+				// This ensures they execute BEFORE we mark started = true
+				boolean completed = displayAccessLatch.await(5, TimeUnit.SECONDS);
+				if (!completed) {
+					System.err.println("WARNING: Timeout waiting for async/sync operations with DisplayAccess");
+				}
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				System.err.println("WARNING: Interrupted while waiting for async/sync operations");
+			}
+		}
+
+		// Now mark as started - operations with DisplayAccess should have completed
+		// Operations without DisplayAccess should still be pending (deferred)
 		synchronized (RCPTestWorkbenchAdvisor.class) {
 			started = true;
 		}

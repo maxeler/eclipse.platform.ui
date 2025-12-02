@@ -53,7 +53,7 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 
 	private boolean isTargetSupportingRegEx;
 	private boolean isTargetEditable;
-	private Set<SearchOptions> searchOptions = new HashSet<>();
+	private final Set<SearchOptions> searchOptions = new HashSet<>();
 
 	private String findString = ""; //$NON-NLS-1$
 	private String replaceString = ""; //$NON-NLS-1$
@@ -183,11 +183,9 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 			resetIncrementalBaseLocation();
 		}
 
-		if (target == null || !(target instanceof IFindReplaceTargetExtension)) {
+		if (target == null || !(target instanceof IFindReplaceTargetExtension extensionTarget)) {
 			return;
 		}
-
-		IFindReplaceTargetExtension extensionTarget = (IFindReplaceTargetExtension) target;
 
 		IRegion scope;
 		Point lineSelection = extensionTarget.getLineSelection();
@@ -204,11 +202,9 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 	 * Unsets the search scope for a "Scoped"-Search.
 	 */
 	private void unsetSearchScope() {
-		if (target == null || !(target instanceof IFindReplaceTargetExtension)) {
+		if (target == null || !(target instanceof IFindReplaceTargetExtension extensionTarget)) {
 			return;
 		}
-
-		IFindReplaceTargetExtension extensionTarget = (IFindReplaceTargetExtension) target;
 
 		extensionTarget.setScope(null);
 	}
@@ -309,8 +305,7 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 	 *         otherwise
 	 */
 	private boolean prepareTargetForEditing() {
-		if (target instanceof IFindReplaceTargetExtension2) {
-			IFindReplaceTargetExtension2 extension = (IFindReplaceTargetExtension2) target;
+		if (target instanceof IFindReplaceTargetExtension2 extension) {
 			if (!extension.validateTargetState()) {
 				status = new FindStatus(FindStatus.StatusCode.READONLY);
 				return false;
@@ -470,11 +465,12 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 	 * @return the selection after replacing, i.e. the inserted text
 	 */
 	private Point replaceSelection() {
-		if (target instanceof IFindReplaceTargetExtension3)
+		if (target instanceof IFindReplaceTargetExtension3) {
 			((IFindReplaceTargetExtension3) target).replaceSelection(replaceString,
 					isAvailableAndActive(SearchOptions.REGEX));
-		else
+		} else {
 			target.replaceSelection(replaceString);
+		}
 
 		return target.getSelection();
 	}
@@ -580,8 +576,9 @@ public class FindReplaceLogic implements IFindReplaceLogic {
 		this.isTargetEditable = canEditTarget;
 
 		if (this.target != newTarget) {
-			if (this.target instanceof IFindReplaceTargetExtension)
+			if (this.target instanceof IFindReplaceTargetExtension) {
 				((IFindReplaceTargetExtension) this.target).endSession();
+			}
 
 			this.target = newTarget;
 			isTargetSupportingRegEx = newTarget instanceof IFindReplaceTargetExtension3;

@@ -51,9 +51,9 @@ public class MappedSet extends ObservableSet {
 	/*
 	 * Map from values (range elements) to Integer ref counts
 	 */
-	private Map valueCounts = new HashMap();
+	private final Map valueCounts = new HashMap();
 
-	private ISetChangeListener domainListener = new ISetChangeListener() {
+	private final ISetChangeListener domainListener = new ISetChangeListener() {
 		@Override
 		public void handleSetChange(SetChangeEvent event) {
 			Set additions = new HashSet();
@@ -74,7 +74,7 @@ public class MappedSet extends ObservableSet {
 		}
 	};
 
-	private IMapChangeListener mapChangeListener = (MapChangeEvent event) -> {
+	private final IMapChangeListener mapChangeListener = (MapChangeEvent event) -> {
 		MapDiff diff = event.diff;
 		Set additions = new HashSet();
 		Set removals = new HashSet();
@@ -103,12 +103,13 @@ public class MappedSet extends ObservableSet {
 		fireSetChange(Diffs.createSetDiff(additions, removals));
 	};
 
-	private IObservableSet input;
+	private final IObservableSet input;
 
 	/**
 	 * @param input input set with keys from the map
 	 * @param map   the map to map
 	 */
+	@Deprecated
 	public MappedSet(IObservableSet input, IObservableMap map) {
 		super(input.getRealm(), Collections.EMPTY_SET, Object.class);
 		setWrappedSet(valueCounts.keySet());
@@ -126,6 +127,7 @@ public class MappedSet extends ObservableSet {
 	 * @param mapValue map value to add
 	 * @return true if the given mapValue was an addition
 	 */
+	@Deprecated
 	protected boolean handleAddition(Object mapValue) {
 		Integer count = (Integer) valueCounts.get(mapValue);
 		if (count == null) {
@@ -140,6 +142,7 @@ public class MappedSet extends ObservableSet {
 	 * @param mapValue map value to remove
 	 * @return true if the given mapValue has been removed
 	 */
+	@Deprecated
 	protected boolean handleRemoval(Object mapValue) {
 		Integer count = (Integer) valueCounts.get(mapValue);
 		if (count.intValue() <= 1) {
@@ -150,6 +153,7 @@ public class MappedSet extends ObservableSet {
 		return false;
 	}
 
+	@Deprecated
 	@Override
 	public synchronized void dispose() {
 		wrappedMap.removeMapChangeListener(mapChangeListener);

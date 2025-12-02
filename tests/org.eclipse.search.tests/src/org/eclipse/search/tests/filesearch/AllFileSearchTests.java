@@ -13,13 +13,11 @@
  *******************************************************************************/
 package org.eclipse.search.tests.filesearch;
 
-import org.junit.ClassRule;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
-@RunWith(Suite.class)
-@SuiteClasses({
+@Suite
+@SelectClasses({
 		AnnotationManagerTest.class,
 		FileSearchTests.class,
 		LineAnnotationManagerTest.class,
@@ -29,6 +27,4 @@ import org.junit.runners.Suite.SuiteClasses;
 		SortingTest.class
 })
 public class AllFileSearchTests {
-	@ClassRule
-	public static JUnitSourceSetup fgJUnitSource= new JUnitSourceSetup();
 }

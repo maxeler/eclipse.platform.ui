@@ -63,7 +63,7 @@ public final class ParameterizedCommand implements Comparable {
 	 *
 	 * @deprecated no longer used
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static final int INDEX_PARAMETER_ID = 0;
 
 	/**
@@ -72,7 +72,7 @@ public final class ParameterizedCommand implements Comparable {
 	 *
 	 * @deprecated no longer used
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static final int INDEX_PARAMETER_NAME = 1;
 
 	/**
@@ -81,7 +81,7 @@ public final class ParameterizedCommand implements Comparable {
 	 *
 	 * @deprecated no longer used
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static final int INDEX_PARAMETER_VALUE_NAME = 2;
 
 	/**
@@ -89,7 +89,7 @@ public final class ParameterizedCommand implements Comparable {
 	 *
 	 * @deprecated no longer used
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static final int INDEX_PARAMETER_VALUE_VALUE = 3;
 
 	/**
@@ -423,11 +423,10 @@ public final class ParameterizedCommand implements Comparable {
 			return true;
 		}
 
-		if (!(object instanceof ParameterizedCommand)) {
+		if (!(object instanceof final ParameterizedCommand command)) {
 			return false;
 		}
 
-		final ParameterizedCommand command = (ParameterizedCommand) object;
 		return Objects.equals(this.command, command.command)
 				&& Arrays.equals(this.parameterizations, command.parameterizations);
 	}
@@ -435,7 +434,7 @@ public final class ParameterizedCommand implements Comparable {
 	/**
 	 * Executes this command with its parameters. This method will succeed
 	 * regardless of whether the command is enabled or defined. It is
-	 * preferrable to use {@link #executeWithChecks(Object, Object)}.
+	 * preferable to use {@link #executeWithChecks(Object, Object)}.
 	 *
 	 * @param trigger
 	 *            The object that triggered the execution; may be
@@ -451,7 +450,7 @@ public final class ParameterizedCommand implements Comparable {
 	 * @deprecated Please use {@link #executeWithChecks(Object, Object)}
 	 *             instead.
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public Object execute(final Object trigger, final Object applicationContext)
 			throws ExecutionException, NotHandledException {
 		return command.execute(new ExecutionEvent(command, getParameterMap(), trigger, applicationContext));

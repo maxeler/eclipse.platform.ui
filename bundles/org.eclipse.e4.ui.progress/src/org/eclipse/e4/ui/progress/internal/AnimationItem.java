@@ -25,7 +25,7 @@ import org.eclipse.swt.widgets.Control;
  */
 public abstract class AnimationItem {
 
-	private AnimationManager animationManager;
+	private final AnimationManager animationManager;
 
 	interface IAnimationContainer {
 		/**
@@ -39,7 +39,7 @@ public abstract class AnimationItem {
 		public abstract void animationDone();
 	}
 
-	//Create a containter that does nothing by default
+	// Create a container that does nothing by default
 	IAnimationContainer animationContainer = new IAnimationContainer() {
 		@Override
 		public void animationDone() {

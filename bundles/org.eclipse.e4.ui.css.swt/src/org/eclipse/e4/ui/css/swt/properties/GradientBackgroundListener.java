@@ -37,6 +37,7 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.ImageDataProvider;
 import org.eclipse.swt.graphics.ImageGcDrawer;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.Point;
@@ -55,7 +56,7 @@ public class GradientBackgroundListener implements Listener {
 	private boolean radialGradient;
 	Image gradientImage;
 
-	private DisposeListener disposeListener = new DisposeListener() {
+	private final DisposeListener disposeListener = new DisposeListener() {
 		@Override
 		public void widgetDisposed(DisposeEvent e) {
 			GradientBackgroundListener.remove(control);
@@ -124,24 +125,26 @@ public class GradientBackgroundListener implements Listener {
 		if (grad.isRadial()) {
 			List<java.awt.Color> colors = new ArrayList<>();
 			for (Object rgbObj : grad.getRGBs()) {
-				if (rgbObj instanceof RGBA) {
-					RGBA rgba = (RGBA) rgbObj;
+				if (rgbObj instanceof RGBA rgba) {
 					java.awt.Color color = new java.awt.Color(rgba.rgb.red, rgba.rgb.green, rgba.rgb.blue, rgba.alpha);
 					colors.add(color);
-				} else if (rgbObj instanceof RGB) {
-					RGB rgb = (RGB) rgbObj;
+				} else if (rgbObj instanceof RGB rgb) {
 					java.awt.Color color = new java.awt.Color(rgb.red, rgb.green, rgb.blue);
 					colors.add(color);
 				}
 			}
 
-			BufferedImage image = getBufferedImage(size.x, size.y, colors,
-					CSSSWTColorHelper.getPercents(grad));
-			// long startTime = System.currentTimeMillis();
-			ImageData imagedata = convertToSWT(image);
-			// System.out.println("Conversion took "
-			// + (System.currentTimeMillis() - startTime) + " ms");
-			gradientImage = new Image(control.getDisplay(), imagedata);
+			ImageDataProvider imageDataProvider = zoom -> {
+				float scaleFactor = zoom / 100f;
+				int scaledWidth = Math.round(size.x * scaleFactor);
+				int scaledHeight = Math.round(size.y * scaleFactor);
+				BufferedImage image = getBufferedImage(scaledWidth, scaledHeight, colors,
+						CSSSWTColorHelper.getPercents(grad));
+				ImageData imagedata = convertToSWT(image);
+				return imagedata;
+			};
+
+			gradientImage = new Image(control.getDisplay(), imageDataProvider);
 			radialGradient = true;
 		} else if (oldImage == null || oldImage.isDisposed()
 				|| oldImage.getBounds().height != size.y || radialGradient
@@ -153,12 +156,10 @@ public class GradientBackgroundListener implements Listener {
 			final ImageGcDrawer imageGcDrawer = (gc, width, height) -> {
 				List<Color> colors = new ArrayList<>();
 				for (Object rgbObj : grad.getRGBs()) {
-					if (rgbObj instanceof RGBA) {
-						RGBA rgba = (RGBA) rgbObj;
+					if (rgbObj instanceof RGBA rgba) {
 						Color color = new Color(control.getDisplay(), rgba);
 						colors.add(color);
-					} else if (rgbObj instanceof RGB) {
-						RGB rgb = (RGB) rgbObj;
+					} else if (rgbObj instanceof RGB rgb) {
 						Color color = new Color(control.getDisplay(), rgb);
 						colors.add(color);
 					}

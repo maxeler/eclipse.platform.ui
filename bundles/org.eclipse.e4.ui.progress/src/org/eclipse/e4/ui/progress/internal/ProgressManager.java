@@ -67,7 +67,7 @@ public class ProgressManager extends ProgressProvider {
 	 *
 	 * @deprecated use IProgressConstants#PROPERTY_IN_DIALOG instead
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static final QualifiedName PROPERTY_IN_DIALOG = IProgressConstants.PROPERTY_IN_DIALOG;
 
 	private static final String ERROR_JOB = "errorstate.svg"; //$NON-NLS-1$
@@ -85,7 +85,7 @@ public class ProgressManager extends ProgressProvider {
 			.synchronizedMap(new HashMap<>());
 
 	//	list of IJobProgressManagerListener
-	private ListenerList<IJobProgressManagerListener> listeners = new ListenerList<>();
+	private final ListenerList<IJobProgressManagerListener> listeners = new ListenerList<>();
 
 	IJobChangeListener changeListener;
 
@@ -192,8 +192,7 @@ public class ProgressManager extends ProgressProvider {
 	public IProgressMonitor createMonitor(Job job, IProgressMonitor group,
 			int ticks) {
 		JobMonitor monitor = progressFor(job);
-		if (group instanceof GroupInfo) {
-			GroupInfo groupInfo = (GroupInfo) group;
+		if (group instanceof GroupInfo groupInfo) {
 			JobInfo jobInfo = getJobInfo(job);
 			jobInfo.setGroupInfo(groupInfo);
 			jobInfo.setTicks(ticks);
@@ -299,8 +298,9 @@ public class ProgressManager extends ProgressProvider {
 			// Use the internal get so we don't create a Job Info for
 			// a job that is not running (see bug 149857)
 			JobInfo info = internalGetJobInfo(job);
-			if (info == null)
+			if (info == null) {
 				return false;
+			}
 			return info.isCanceled();
 		}
 
@@ -459,8 +459,9 @@ public class ProgressManager extends ProgressProvider {
 			@Override
 			public void sleeping(IJobChangeEvent event) {
 
-				if (jobs.containsKey(event.getJob()))// Are we showing this?
+				if (jobs.containsKey(event.getJob())) { // Are we showing this?
 					sleepJobInfo(getJobInfo(event.getJob()));
+				}
 			}
 		};
 	}
@@ -472,8 +473,9 @@ public class ProgressManager extends ProgressProvider {
 	 * @param info the job going to sleep
 	 */
 	protected void sleepJobInfo(JobInfo info) {
-		if (isInfrastructureJob(info.getJob()))
+		if (isInfrastructureJob(info.getJob())) {
 			return;
+		}
 
 		GroupInfo group = info.getGroupInfo();
 		if (group != null) {
@@ -482,12 +484,14 @@ public class ProgressManager extends ProgressProvider {
 
 		for (IJobProgressManagerListener listener : listeners) {
 			// Is this one the user never sees?
-			if (isNeverDisplaying(info.getJob(), listener.showsDebug()))
+			if (isNeverDisplaying(info.getJob(), listener.showsDebug())) {
 				continue;
-			if (listener.showsDebug())
+			}
+			if (listener.showsDebug()) {
 				listener.refreshJobInfo(info);
-			else
+			} else {
 				listener.removeJob(info);
+			}
 
 		}
 	}
@@ -517,13 +521,15 @@ public class ProgressManager extends ProgressProvider {
 	private void sleepGroup(GroupInfo group, JobInfo info) {
 		for (IJobProgressManagerListener listener : listeners) {
 
-			if (isNeverDisplaying(info.getJob(), listener.showsDebug()))
+			if (isNeverDisplaying(info.getJob(), listener.showsDebug())) {
 				continue;
+			}
 
-			if (listener.showsDebug() || group.isActive())
+			if (listener.showsDebug() || group.isActive()) {
 				listener.refreshGroup(group);
-			else
+			} else {
 				listener.removeGroup(group);
+			}
 		}
 	}
 
@@ -616,7 +622,7 @@ public class ProgressManager extends ProgressProvider {
 	 * @deprecated use the more thread safe {@link #removeJob(Job)} instead. See bug
 	 *             558655.
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public void removeJobInfo(JobInfo info) {
 		removeJob(info.getJob());
 	}
@@ -674,8 +680,9 @@ public class ProgressManager extends ProgressProvider {
 		if (isInfrastructureJob(job)) {
 			return true;
 		}
-		if (debug)
+		if (debug) {
 			return false;
+		}
 
 		return job.isSystem();
 	}
@@ -686,8 +693,9 @@ public class ProgressManager extends ProgressProvider {
 	 * @return boolean <code>true</code> if it is never displayed.
 	 */
 	private boolean isInfrastructureJob(Job job) {
-		if (Policy.DEBUG_SHOW_ALL_JOBS)
+		if (Policy.DEBUG_SHOW_ALL_JOBS) {
 			return false;
+		}
 		return job.getProperty(ProgressManagerUtil.INFRASTRUCTURE_PROPERTY) != null;
 	}
 

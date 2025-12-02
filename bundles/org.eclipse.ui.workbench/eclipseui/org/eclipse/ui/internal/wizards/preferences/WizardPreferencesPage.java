@@ -709,7 +709,7 @@ public abstract class WizardPreferencesPage extends WizardPage implements Listen
 		FileDialog dialog = new FileDialog(getContainer().getShell(), getFileDialogStyle());
 		dialog.setText(getFileDialogTitle());
 		dialog.setFilterPath(getDestinationValue());
-		dialog.setFilterExtensions(new String[] { "*.epf", "*.*" }); //$NON-NLS-1$ //$NON-NLS-2$
+		dialog.setFilterExtensions("*.epf", "*.*"); //$NON-NLS-1$ //$NON-NLS-2$
 		String selectedFileName = dialog.open();
 
 		if (selectedFileName != null) {
@@ -793,10 +793,11 @@ public abstract class WizardPreferencesPage extends WizardPage implements Listen
 		if (shouldSaveTransferAll() && settings != null) {
 
 			boolean transferAll;
-			if (settings.get(TRANSFER_ALL_PREFERENCES_ID) == null)
+			if (settings.get(TRANSFER_ALL_PREFERENCES_ID) == null) {
 				transferAll = true;
-			else
+			} else {
 				transferAll = settings.getBoolean(TRANSFER_ALL_PREFERENCES_ID);
+			}
 			transferAllButton.setSelection(transferAll);
 			if (!transferAll) {
 				String[] preferenceIds = settings.getArray(TRANSFER_PREFERENCES_NAMES_ID);

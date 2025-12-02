@@ -41,9 +41,9 @@ import org.eclipse.jface.preference.PreferenceConverter;
 public class PropagatingFontFieldEditor extends FontFieldEditor {
 
 	/** The editor's parent widget */
-	private Composite fParent;
+	private final Composite fParent;
 	/** The representation of the default font choice */
-	private String fDefaultFontLabel;
+	private final String fDefaultFontLabel;
 
 	/**
 	 * Creates a new font field editor with the given parameters.
@@ -53,20 +53,24 @@ public class PropagatingFontFieldEditor extends FontFieldEditor {
 	 * @param parent the editor's parent widget
 	 * @param defaultFontLabel the label shown in the editor value field when the default value should be taken
 	 */
+	@Deprecated
 	public PropagatingFontFieldEditor(String name, String labelText, Composite parent, String defaultFontLabel) {
 		super(name, labelText, parent);
 		fParent= parent;
 		fDefaultFontLabel= defaultFontLabel == null ? "" : defaultFontLabel; //$NON-NLS-1$
 	}
 
+	@Deprecated
 	@Override
 	protected void doLoad() {
-		if (getPreferenceStore().isDefault(getPreferenceName()))
+		if (getPreferenceStore().isDefault(getPreferenceName())) {
 			loadDefault();
+		}
 		super.doLoad();
 		checkForDefault();
 	}
 
+	@Deprecated
 	@Override
 	protected void doLoadDefault() {
 		super.doLoadDefault();
@@ -115,10 +119,12 @@ public class PropagatingFontFieldEditor extends FontFieldEditor {
 	 * @param target the target preference store
 	 * @param targetKey the key to be used in the target preference store
 	 */
+	@Deprecated
 	public static void startPropagate(final IPreferenceStore source, final String sourceKey, final IPreferenceStore target, final String targetKey) {
 		source.addPropertyChangeListener(event -> {
-			if (sourceKey.equals(event.getProperty()))
+			if (sourceKey.equals(event.getProperty())) {
 				propagateFont(source, sourceKey, target, targetKey);
+			}
 		});
 
 		propagateFont(source, sourceKey, target, targetKey);

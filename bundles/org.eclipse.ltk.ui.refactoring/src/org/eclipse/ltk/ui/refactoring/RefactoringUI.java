@@ -133,10 +133,11 @@ public class RefactoringUI {
 	 */
 	/* package */static Dialog createRefactoringWizardDialog(RefactoringWizard wizard, Shell parent) {
 		Dialog result;
-		if (wizard.needsWizardBasedUserInterface())
+		if (wizard.needsWizardBasedUserInterface()) {
 			result= new RefactoringWizardDialog(parent, wizard);
-		else
+		} else {
 			result= new RefactoringWizardDialog2(parent, wizard);
+		}
 		return result;
 	}
 
@@ -173,7 +174,7 @@ public class RefactoringUI {
 	 * @deprecated use {@link PerformChangeOperation#PerformChangeOperation(Change)}.
 	 *             Since 3.1, undo batching is implemented in {@link TextChange}.
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static PerformChangeOperation createUIAwareChangeOperation(Change change) {
 		return new PerformChangeOperation(change);
 	}

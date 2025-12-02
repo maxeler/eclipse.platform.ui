@@ -54,15 +54,15 @@ public class ContentAssistHandler {
 	/**
 	 * The target control.
 	 */
-	private Control fControl;
+	private final Control fControl;
 	/**
 	 * The content assist subject adapter.
 	 */
-	private AbstractControlContentAssistSubjectAdapter fContentAssistSubjectAdapter;
+	private final AbstractControlContentAssistSubjectAdapter fContentAssistSubjectAdapter;
 	/**
 	 * The content assistant.
 	 */
-	private SubjectControlContentAssistant fContentAssistant;
+	private final SubjectControlContentAssistant fContentAssistant;
 	/**
 	 * The currently installed FocusListener, or <code>null</code> iff none installed.
 	 * This is also used as flag to tell whether content assist is enabled
@@ -82,6 +82,7 @@ public class ContentAssistHandler {
 	 * @param contentAssistant a configured content assistant
 	 * @return a new {@link ContentAssistHandler}
 	 */
+	@Deprecated
 	public static ContentAssistHandler createHandlerForCombo(Combo combo, SubjectControlContentAssistant contentAssistant) {
 		return new ContentAssistHandler(combo, new ComboContentAssistSubjectAdapter(combo), contentAssistant);
 	}
@@ -95,6 +96,7 @@ public class ContentAssistHandler {
 	 * @param contentAssistant a configured content assistant
 	 * @return a new {@link ContentAssistHandler}
 	 */
+	@Deprecated
 	public static ContentAssistHandler createHandlerForText(Text text, SubjectControlContentAssistant contentAssistant) {
 		return new ContentAssistHandler(text, new TextContentAssistSubjectAdapter(text), contentAssistant);
 	}
@@ -120,6 +122,7 @@ public class ContentAssistHandler {
 	/**
 	 * @return <code>true</code> iff content assist is enabled
 	 */
+	@Deprecated
 	public boolean isEnabled() {
 		return fFocusListener != null;
 	}
@@ -131,14 +134,17 @@ public class ContentAssistHandler {
 	 *
 	 * @param enable enable content assist iff true
 	 */
+	@Deprecated
 	public void setEnabled(boolean enable) {
-		if (enable == isEnabled())
+		if (enable == isEnabled()) {
 			return;
+		}
 
-		if (enable)
+		if (enable) {
 			enable();
-		else
+		} else {
 			disable();
+		}
 	}
 
 	/**
@@ -149,8 +155,9 @@ public class ContentAssistHandler {
 			fContentAssistant.install(fContentAssistSubjectAdapter);
 			installCueLabelProvider();
 			installFocusListener();
-			if (fControl.isFocusControl())
+			if (fControl.isFocusControl()) {
 				activateHandler();
+			}
 		}
 	}
 
@@ -163,8 +170,9 @@ public class ContentAssistHandler {
 			fContentAssistSubjectAdapter.setContentAssistCueProvider(null);
 			fControl.removeFocusListener(fFocusListener);
 			fFocusListener= null;
-			if (fHandlerActivation != null)
+			if (fHandlerActivation != null) {
 				deactivateHandler();
+			}
 		}
 	}
 
@@ -177,8 +185,9 @@ public class ContentAssistHandler {
 			public String getText(Object element) {
 				IBindingService bindingService= PlatformUI.getWorkbench().getAdapter(IBindingService.class);
 				TriggerSequence[] activeBindings= bindingService.getActiveBindingsFor(ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS);
-				if (activeBindings.length == 0)
+				if (activeBindings.length == 0) {
 					return ContentAssistMessages.ContentAssistHandler_contentAssistAvailable;
+				}
 				return NLSUtility.format(ContentAssistMessages.ContentAssistHandler_contentAssistAvailableWithKeyBinding, activeBindings[0].format());
 			}
 		};
@@ -192,13 +201,15 @@ public class ContentAssistHandler {
 		fFocusListener= new FocusListener() {
 			@Override
 			public void focusGained(final FocusEvent e) {
-				if (fHandlerActivation == null)
+				if (fHandlerActivation == null) {
 					activateHandler();
+				}
 			}
 			@Override
 			public void focusLost(FocusEvent e) {
-				if (fHandlerActivation != null)
+				if (fHandlerActivation != null) {
 					deactivateHandler();
+				}
 			}
 		};
 		fControl.addFocusListener(fFocusListener);
@@ -209,14 +220,16 @@ public class ContentAssistHandler {
 	 */
 	private void activateHandler() {
 		IHandlerService handlerService= PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
-		if (handlerService == null)
+		if (handlerService == null) {
 			return;
+		}
 
 		IHandler handler= new AbstractHandler() {
 			@Override
 			public Object execute(ExecutionEvent event) throws ExecutionException {
-				if (ContentAssistHandler.this.isEnabled()) // don't call AbstractHandler#isEnabled()!
+				if (ContentAssistHandler.this.isEnabled()) { // don't call AbstractHandler#isEnabled()!
 					fContentAssistant.showPossibleCompletions();
+				}
 				return null;
 			}
 		};
@@ -228,8 +241,9 @@ public class ContentAssistHandler {
 	 */
 	private void deactivateHandler() {
 		IHandlerService handlerService= PlatformUI.getWorkbench().getAdapter(IHandlerService.class);
-		if (handlerService != null)
+		if (handlerService != null) {
 			handlerService.deactivateHandler(fHandlerActivation);
+		}
 		fHandlerActivation= null;
 	}
 }

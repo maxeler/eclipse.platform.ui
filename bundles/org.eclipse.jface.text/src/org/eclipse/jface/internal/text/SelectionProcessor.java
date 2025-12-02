@@ -106,8 +106,9 @@ public final class SelectionProcessor {
 		 * @throws BadLocationException if selection is not a valid selection on the target document
 		 */
 		boolean isMultiline(T selection) throws BadLocationException {
-			if (selection == null)
+			if (selection == null) {
 				throw new NullPointerException();
+			}
 			return false;
 		}
 
@@ -293,33 +294,6 @@ public final class SelectionProcessor {
 					TextEdit replace= new ReplaceEdit(region.getOffset(), region.getLength(), string);
 					root.addChild(replace);
 				}
-	//			while (lastDelim != -1) {
-	//				// more stuff to insert
-	//				String string;
-	//				Match m= delimiterMatcher.indexOf(replacement, lastDelim);
-	//				if (m == null) {
-	//					string= replacement.substring(lastDelim);
-	//					lastDelim= -1;
-	//				} else {
-	//					string= replacement.substring(lastDelim, m.getOffset());
-	//					lastDelim= m.getOffset() + m.getText().length();
-	//				}
-	//				endLine++;
-	//				TextEdit edit;
-	//				if (endLine < fDocument.getNumberOfLines()) {
-	//					edit= createReplaceEdit(endLine, visualStartColumn, visualEndColumn, string, delete);
-	//				} else {
-	//					// insertion reaches beyond the last line
-	//					int insertLocation= root.getExclusiveEnd();
-	//					int spaces= visualStartColumn;
-	//					char[] array= new char[spaces];
-	//					Arrays.fill(array, ' ');
-	//					string= TextUtilities.getDefaultLineDelimiter(fDocument) + String.valueOf(array) + string;
-	//					edit= new InsertEdit(insertLocation, string);
-	//					insertLocation+= string.length();
-	//				}
-	//				root.addChild(edit);
-	//			}
 				return root;
 			}
 		}
@@ -544,8 +518,9 @@ public final class SelectionProcessor {
 
 			for (int line= startLine; line <= endLine; line++) {
 				appendColumnRange(buf, line, visualStartColumn, visualEndColumn);
-				if (line != endLine)
+				if (line != endLine) {
 					buf.append(fDocument.getLineDelimiter(line));
+				}
 			}
 
 			return buf.toString();
@@ -656,16 +631,18 @@ public final class SelectionProcessor {
 			int visual= 0;
 			for (int offset= 0; offset < lineLength; offset++) {
 				if (startColumn == -1) {
-					if (visual == visualStartColumn)
-						if (!delete && isWider(content.charAt(offset), visual) && replacement.isEmpty())
+					if (visual == visualStartColumn) {
+						if (!delete && isWider(content.charAt(offset), visual) && replacement.isEmpty()) {
 							startColumn= offset - 1;
-						else
+						} else {
 							startColumn= offset;
-					else if (visual > visualStartColumn) {
-						if (isWider(content.charAt(offset - 1), visual))
+						}
+					} else if (visual > visualStartColumn) {
+						if (isWider(content.charAt(offset - 1), visual)) {
 							startColumn= offset - 1;
-						else
+						} else {
 							startColumn= offset;
+						}
 					}
 				}
 				if (startColumn != -1) {
@@ -673,10 +650,11 @@ public final class SelectionProcessor {
 						endColumn= offset;
 						break;
 					} else if (visual > visualEndColumn) {
-						if (!delete && isWider(content.charAt(offset - 1), visual))
+						if (!delete && isWider(content.charAt(offset - 1), visual)) {
 							endColumn= offset - 1;
-						else
+						} else {
 							endColumn= offset;
+						}
 						break;
 					}
 				}
@@ -692,10 +670,12 @@ public final class SelectionProcessor {
 				}
 				return new MultiTextEdit();
 			}
-			if (endColumn == -1)
+			if (endColumn == -1) {
 				endColumn= lineLength;
-			if (replacement.isEmpty())
+			}
+			if (replacement.isEmpty()) {
 				return new DeleteEdit(info.getOffset() + startColumn, endColumn - startColumn);
+			}
 			return new ReplaceEdit(info.getOffset() + startColumn, endColumn - startColumn, replacement);
 		}
 
@@ -707,20 +687,23 @@ public final class SelectionProcessor {
 			int endColumn= -1;
 			int visual= 0;
 			for (int offset= 0; offset < lineLength; offset++) {
-				if (startColumn == -1 && visual >= visualStartColumn)
+				if (startColumn == -1 && visual >= visualStartColumn) {
 					startColumn= offset;
+				}
 				if (visual >= visualEndColumn) {
 					endColumn= offset;
 					break;
 				}
 				visual+= visualSizeIncrement(content.charAt(offset), visual);
 			}
-			if (startColumn != -1)
+			if (startColumn != -1) {
 				buf.append(content.substring(startColumn, endColumn == -1 ? lineLength : endColumn));
+			}
 			if (endColumn == -1) {
 				int spaces= Math.max(0, visualEndColumn - Math.max(visual, visualStartColumn));
-				for (int i= 0; i < spaces; i++)
+				for (int i= 0; i < spaces; i++) {
 					buf.append(' ');
+				}
 			}
 		}
 
@@ -730,10 +713,12 @@ public final class SelectionProcessor {
 			int to= Math.min(lineLength, column);
 			String content= fDocument.get(info.getOffset(), lineLength);
 			int visual= 0;
-			for (int offset= 0; offset < to; offset++)
+			for (int offset= 0; offset < to; offset++) {
 				visual+= visualSizeIncrement(content.charAt(offset), visual);
-			if (column > lineLength)
+			}
+			if (column > lineLength) {
 				visual+= column - lineLength; // virtual spaces
+			}
 			return visual;
 		}
 
@@ -743,8 +728,9 @@ public final class SelectionProcessor {
 			String content= fDocument.get(info.getOffset(), lineLength);
 			int visual= 0;
 			for (int offset= 0; offset < lineLength; offset++) {
-				if (visual >= visualColumn)
+				if (visual >= visualColumn) {
 					return offset;
+				}
 				visual+= visualSizeIncrement(content.charAt(offset), visual);
 			}
 			return lineLength + Math.max(0, visualColumn - visual);
@@ -773,14 +759,17 @@ public final class SelectionProcessor {
 					int singleCharWidth= gc.stringExtent(" ").x; //$NON-NLS-1$
 					return (int) Math.ceil((double) charWidth / singleCharWidth);
 				} finally {
-					if (gc != null)
+					if (gc != null) {
 						gc.dispose();
+					}
 				}
 			}
-			if (character != '\t')
+			if (character != '\t') {
 				return 1;
-			if (fTabWidth <= 0)
+			}
+			if (fTabWidth <= 0) {
 				return 0;
+			}
 			return fTabWidth - visual % fTabWidth;
 		}
 	};
@@ -802,8 +791,7 @@ public final class SelectionProcessor {
 	 */
 	public SelectionProcessor(ITextViewer viewer) {
 		this(viewer.getDocument(), viewer.getTextWidget().getTabs());
-		if (viewer instanceof ITextViewerExtension) {
-			ITextViewerExtension ext= (ITextViewerExtension)viewer;
+		if (viewer instanceof ITextViewerExtension ext) {
 			fRewriteTarget= ext.getRewriteTarget();
 		}
 		fSelectionProvider= viewer.getSelectionProvider();
@@ -936,8 +924,9 @@ public final class SelectionProcessor {
 	public void doDelete(ISelection selection) throws BadLocationException {
 		TextEdit edit= delete(selection);
 		boolean complex= edit.hasChildren();
-		if (complex && fRewriteTarget != null)
+		if (complex && fRewriteTarget != null) {
 			fRewriteTarget.beginCompoundChange();
+		}
 		try {
 			edit.apply(fDocument, TextEdit.UPDATE_REGIONS);
 			if (fSelectionProvider != null) {
@@ -945,8 +934,9 @@ public final class SelectionProcessor {
 				fSelectionProvider.setSelection(empty);
 			}
 		} finally {
-		if (complex && fRewriteTarget != null)
+		if (complex && fRewriteTarget != null) {
 			fRewriteTarget.endCompoundChange();
+		}
 		}
 	}
 
@@ -960,8 +950,9 @@ public final class SelectionProcessor {
 	public void doBackspace(ISelection selection) throws BadLocationException {
 		TextEdit edit= backspace(selection);
 		boolean complex= edit.hasChildren();
-		if (complex && fRewriteTarget != null)
+		if (complex && fRewriteTarget != null) {
 			fRewriteTarget.beginCompoundChange();
+		}
 		try {
 			ISelection newSelection= makeBackspaceSelection(selection);
 			edit.apply(fDocument, TextEdit.UPDATE_REGIONS);
@@ -969,8 +960,9 @@ public final class SelectionProcessor {
 				fSelectionProvider.setSelection(newSelection);
 			}
 		} finally {
-			if (complex && fRewriteTarget != null)
+			if (complex && fRewriteTarget != null) {
 				fRewriteTarget.endCompoundChange();
+			}
 		}
 	}
 
@@ -985,8 +977,9 @@ public final class SelectionProcessor {
 	public void doReplace(ISelection selection, String replacement) throws BadLocationException {
 		TextEdit edit= replace(selection, replacement);
 		boolean complex= edit.hasChildren();
-		if (complex && fRewriteTarget != null)
+		if (complex && fRewriteTarget != null) {
 			fRewriteTarget.beginCompoundChange();
+		}
 		try {
 			edit.apply(fDocument, TextEdit.UPDATE_REGIONS);
 
@@ -995,8 +988,9 @@ public final class SelectionProcessor {
 				fSelectionProvider.setSelection(empty);
 			}
 		} finally {
-			if (complex && fRewriteTarget != null)
+			if (complex && fRewriteTarget != null) {
 				fRewriteTarget.endCompoundChange();
+			}
 		}
 	}
 

@@ -66,18 +66,19 @@ public class NewSearchUI {
 	 * Use {@link #runQueryInBackground(ISearchQuery)} to run a query in background
 	 * or {@link #runQueryInForeground(IRunnableContext, ISearchQuery)} to run it in foreground
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public static void runQuery(ISearchQuery query) {
 		if (query == null) {
 			throw new IllegalArgumentException("query must not be null"); //$NON-NLS-1$
 		}
-		if (query.canRunInBackground())
+		if (query.canRunInBackground()) {
 			runQueryInBackground(query);
-		else {
+		} else {
 			IStatus status= runQueryInForeground(null, query);
 			if (status != null) {
-				if (!status.isOK())
+				if (!status.isOK()) {
 					SearchPlugin.log(status);
+				}
 				if (status.getSeverity() == IStatus.ERROR) {
 					ErrorDialog.openError(SearchPlugin.getActiveWorkbenchShell(), SearchMessages.NewSearchUI_error_title, SearchMessages.NewSearchUI_error_label, status);
 				}
@@ -131,10 +132,11 @@ public class NewSearchUI {
 		if (query == null) {
 			throw new IllegalArgumentException("query must not be null"); //$NON-NLS-1$
 		}
-		if (query.canRunInBackground())
+		if (query.canRunInBackground()) {
 			InternalSearchUI.getInstance().runSearchInBackground(query, view);
-		else
+		} else {
 			throw new IllegalArgumentException("Query can not be run in background"); //$NON-NLS-1$
+		}
 	}
 
 	/**

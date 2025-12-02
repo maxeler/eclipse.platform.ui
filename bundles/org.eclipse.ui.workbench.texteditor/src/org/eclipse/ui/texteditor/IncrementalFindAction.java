@@ -44,7 +44,7 @@ public class IncrementalFindAction extends ResourceAction implements IUpdate {
 	 * The direction to run the incremental find
 	 * @since 2.1
 	 */
-	private boolean fForward;
+	private final boolean fForward;
 
 	/**
 	 * Creates a new incremental find action for the given workbench part.
@@ -83,7 +83,7 @@ public class IncrementalFindAction extends ResourceAction implements IUpdate {
 	 * @deprecated use FindReplaceAction(ResourceBundle, String, IWorkbenchPart, boolean) instead
 	 * @since 2.1
 	 */
-	@Deprecated
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public IncrementalFindAction(ResourceBundle bundle, String prefix, IWorkbenchWindow workbenchWindow, boolean forward) {
 		super(bundle, prefix);
 		fWorkbenchWindow= workbenchWindow;
@@ -94,26 +94,31 @@ public class IncrementalFindAction extends ResourceAction implements IUpdate {
 	@Override
 	public void run() {
 
-		if (fTarget == null)
+		if (fTarget == null) {
 			return;
+		}
 
-		if (fTarget instanceof IncrementalFindTarget)
+		if (fTarget instanceof IncrementalFindTarget) {
 			((IncrementalFindTarget) fTarget).setDirection(fForward);
+		}
 
-		if (fTarget instanceof IFindReplaceTargetExtension)
+		if (fTarget instanceof IFindReplaceTargetExtension) {
 			((IFindReplaceTargetExtension) fTarget).beginSession();
+		}
 	}
 
 	@Override
 	public void update() {
 
-		if (fWorkbenchPart == null && fWorkbenchWindow != null)
+		if (fWorkbenchPart == null && fWorkbenchWindow != null) {
 			fWorkbenchPart= fWorkbenchWindow.getPartService().getActivePart();
+		}
 
-		if (fWorkbenchPart != null)
+		if (fWorkbenchPart != null) {
 			fTarget= fWorkbenchPart.getAdapter(IncrementalFindTarget.class);
-		else
+		} else {
 			fTarget= null;
+		}
 
 		setEnabled(fTarget != null && fTarget.canPerformFind());
 	}

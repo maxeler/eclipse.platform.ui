@@ -28,9 +28,11 @@ import java.io.Reader;
 @Deprecated
 public abstract class SubstitutionTextReader extends SingleCharReader {
 
+	@Deprecated
 	protected static final String LINE_DELIM= System.getProperty("line.separator", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
 
-	private Reader fReader;
+	private final Reader fReader;
+	@Deprecated
 	protected boolean fWasWhiteSpace;
 	private int fCharAfterWhiteSpace;
 
@@ -40,10 +42,11 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	private boolean fSkipWhiteSpace= true;
 
 	private boolean fReadFromBuffer;
-	private StringBuilder fBuffer;
+	private final StringBuilder fBuffer;
 	private int fIndex;
 
 
+	@Deprecated
 	protected SubstitutionTextReader(Reader reader) {
 		fReader= reader;
 		fBuffer= new StringBuilder();
@@ -62,6 +65,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	 * @return the substitution for <code>c</code>
 	 * @throws IOException in case computing the substitution fails
 	 */
+	@Deprecated
 	protected abstract String computeSubstitution(int c) throws IOException;
 
 	/**
@@ -69,6 +73,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	 *
 	 * @return the internal reader
 	 */
+	@Deprecated
 	protected Reader getReader() {
 		return fReader;
 	}
@@ -78,6 +83,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	 * @return the next character
 	 * @throws IOException in case reading the character fails
 	 */
+	@Deprecated
 	protected int nextChar() throws IOException {
 		fReadFromBuffer= (fBuffer.length() > 0);
 		if (fReadFromBuffer) {
@@ -110,6 +116,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	/**
 	 * @see Reader#read()
 	 */
+	@Deprecated
 	@Override
 	public int read() throws IOException {
 		int c;
@@ -118,10 +125,12 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 			c= nextChar();
 			while (!fReadFromBuffer && c != -1) {
 				String s= computeSubstitution(c);
-				if (s == null)
+				if (s == null) {
 					break;
-				if (!s.isEmpty())
+				}
+				if (!s.isEmpty()) {
 					fBuffer.insert(0, s);
+				}
 				c= nextChar();
 			}
 
@@ -133,6 +142,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	/**
 	 * @see Reader#ready()
 	 */
+	@Deprecated
 	@Override
 	public boolean ready() throws IOException {
 		return fReader.ready();
@@ -141,6 +151,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	/**
 	 * @see Reader#close()
 	 */
+	@Deprecated
 	@Override
 	public void close() throws IOException {
 		fReader.close();
@@ -149,6 +160,7 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 	/**
 	 * @see Reader#reset()
 	 */
+	@Deprecated
 	@Override
 	public void reset() throws IOException {
 		fReader.reset();
@@ -158,10 +170,12 @@ public abstract class SubstitutionTextReader extends SingleCharReader {
 		fIndex= 0;
 	}
 
+	@Deprecated
 	protected final void setSkipWhitespace(boolean state) {
 		fSkipWhiteSpace= state;
 	}
 
+	@Deprecated
 	protected final boolean isSkippingWhitespace() {
 		return fSkipWhiteSpace;
 	}

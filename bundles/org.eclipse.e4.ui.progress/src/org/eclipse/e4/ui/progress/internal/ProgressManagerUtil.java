@@ -143,8 +143,9 @@ public class ProgressManagerUtil {
 		EPartService partService = services.getPartService();
 		if (progressView == null) {
 			progressView = partService.createPart(ProgressManager.PROGRESS_VIEW_NAME);
-			if (progressView != null)
+			if (progressView != null) {
 				partService.showPart(progressView, PartState.VISIBLE);
+			}
 		}
 		if (progressView == null) {
 			return;
@@ -196,13 +197,11 @@ public class ProgressManagerUtil {
 	}
 
 	/**
-	 * Find the second index of a whitespace. Return the first index if there
-	 * isn't one or 0 if there is no space at all.
+	 * Find the second index of a whitespace. Return the first index if there isn't
+	 * one or 0 if there is no space at all.
 	 *
-	 * @param gc
-	 *            The GC to test max length
-	 * @param maxWidth
-	 *            The maximim extent
+	 * @param gc       The GC to test max length
+	 * @param maxWidth The maximum extent
 	 * @return int
 	 */
 	private static int findSecondWhitespace(String textValue, GC gc,

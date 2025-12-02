@@ -58,6 +58,7 @@ import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.CursorLinePainter;
+import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.source.CompositeRuler;
@@ -157,7 +158,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 	public static final Styler HIGHLIGHT_STYLE = org.eclipse.search.internal.ui.text.DecoratingFileSearchLabelProvider.HIGHLIGHT_STYLE;
 
-	private UIJob refreshJob = UIJob.create(Messages.QuickSearchDialog_RefreshJob,
+	private final UIJob refreshJob = UIJob.create(Messages.QuickSearchDialog_RefreshJob,
 			(ICoreRunnable) m -> refreshWidgets());
 
 	protected void openSelection() {
@@ -358,7 +359,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 	private MenuManager contextMenuManager;
 
-	private boolean multi;
+	private final boolean multi;
 
 	private ToolBar toolBar;
 
@@ -366,7 +367,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 
 	private Label progressLabel;
 
-	private ContentProvider contentProvider;
+	private final ContentProvider contentProvider;
 
 	private String initialPatternText;
 
@@ -393,14 +394,14 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	private ToggleKeepOpenAction toggleKeepOpenAction;
 
 
-	private QuickSearchContext context;
+	private final QuickSearchContext context;
 
 
 	private SashForm sashForm;
 
 	private Label headerLabel;
 
-	private IWorkbenchWindow window;
+	private final IWorkbenchWindow window;
 	private Combo searchIn;
 	private Label listLabel;
 
@@ -570,10 +571,12 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 			showViewHandler.getHandler().dispose();
 			showViewHandler = null;
 		}
-		if (menuManager != null)
+		if (menuManager != null) {
 			menuManager.dispose();
-		if (contextMenuManager != null)
+		}
+		if (contextMenuManager != null) {
 			contextMenuManager.dispose();
+		}
 		storeDialog(getDialogSettings());
 		if (searcher!=null) {
 			searcher.cancel();
@@ -956,7 +959,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		});
 
 		createDetailsArea(sashForm);
-		sashForm.setWeights(new int[] {5,2});
+		sashForm.setWeights(5, 2);
 
 		applyDialogFont(content);
 
@@ -1171,6 +1174,9 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 							viewer.revealRange(rangeStart, rangeEnd - rangeStart);
 
 							var targetLineFirstMatch = getQuery().findFirst(document.get(item.getOffset(), contextLenght - (item.getOffset() - start)));
+							if (targetLineFirstMatch == null) {
+							    return; // nothing to refresh
+							}
 							int targetLineFirstMatchStart = item.getOffset() + targetLineFirstMatch.getOffset();
 							// sets caret position
 							viewer.setSelectedRange(targetLineFirstMatchStart, 0);
@@ -1287,6 +1293,10 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 				//element is available in the list.
 				openButton.setEnabled(itemCount>0);
 			}
+			//Auto-select the first search result for preview to be shown.
+			if (itemCount >= 1 && list.getSelection().isEmpty()) {
+	            list.getTable().select(0);
+	        }
 			refreshDetails();
 		}
 	}
@@ -1482,6 +1492,14 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 		} else {
 			//The QuickTextSearcher is already active update the query
 			this.searcher.setQuery(newFilter, force);
+			if(newFilter.getPatternString().trim().isEmpty()) {
+				//When pattern is cleared, clear the preview section
+				viewer.setDocument(new Document("")); //$NON-NLS-1$
+			    if (lineNumberColumn != null) {
+			        viewer.removeVerticalRulerColumn(lineNumberColumn);
+			        viewer.addVerticalRulerColumn(lineNumberColumn);
+			    }
+			}
 		}
 		if (progressJob!=null) {
 			progressJob.schedule();
@@ -1512,7 +1530,7 @@ public class QuickSearchDialog extends SelectionStatusDialog {
 	 */
 	private class ContentProvider implements IStructuredContentProvider, ILazyContentProvider {
 
-		private List items;
+		private final List items;
 		private Comparator<LineItem> comparator;
 		/**
 		 * Creates new instance of <code>ContentProvider</code>.

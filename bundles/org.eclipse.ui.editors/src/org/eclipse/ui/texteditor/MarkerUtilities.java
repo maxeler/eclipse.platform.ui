@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.Platform;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -58,7 +59,7 @@ public final class MarkerUtilities {
 	private static class MarkerTypeHierarchy {
 
 		private Map<String, String[]> fTypeMap;
-		private Map<String, String[]> fSuperTypesCache= new HashMap<>();
+		private final Map<String, String[]> fSuperTypesCache= new HashMap<>();
 
 		public String[] getSuperTypes(String typeName) {
 			String[] cachedTypes= fSuperTypesCache.get(typeName);
@@ -88,17 +89,20 @@ public final class MarkerUtilities {
 		}
 
 		private <T> void appendAll(List<T> list, T[] objects) {
-			if (objects == null)
+			if (objects == null) {
 				return;
+			}
 			for (T o : objects) {
-				if (!list.contains(o))
+				if (!list.contains(o)) {
 					list.add(o);
+				}
 			}
 		}
 
 		private Map<String, String[]> getTypeMap() {
-			if (fTypeMap == null)
+			if (fTypeMap == null) {
 				fTypeMap= readTypes();
+			}
 			return fTypeMap;
 		}
 
@@ -170,8 +174,9 @@ public final class MarkerUtilities {
 	 * 							if the attribute does not exist or isn't an int
 	 */
 	private static int getIntAttribute(IMarker marker, String attributeName, int defaultValue) {
-		if (marker.exists())
+		if (marker.exists()) {
 			return marker.getAttribute(attributeName, defaultValue);
+		}
 		return defaultValue;
 	}
 
@@ -254,7 +259,11 @@ public final class MarkerUtilities {
 		try {
 			return marker.getType();
 		} catch (CoreException x) {
-			handleCoreException(x);
+			// check if the marker marker was deleted and an exception was thrown due to that
+			boolean deletedMarkerNotFound = x.getStatus().getCode() == IResourceStatus.MARKER_NOT_FOUND && !marker.exists();
+			if (!deletedMarkerNotFound) {
+				handleCoreException(x);
+			}
 		}
 		return null;
 	}
@@ -327,8 +336,9 @@ public final class MarkerUtilities {
 	 */
 	private static void setIntAttribute(IMarker marker, String attributeName, int value) {
 		try {
-			if (marker.exists())
+			if (marker.exists()) {
 				marker.setAttribute(attributeName, value);
+			}
 		} catch (CoreException e) {
 			handleCoreException(e);
 		}
@@ -400,8 +410,9 @@ public final class MarkerUtilities {
 	 * @return a depth-first list of all super types of the given marker type
 	 */
 	public static String[] getSuperTypes(String markerType) {
-		if (fgMarkerTypeHierarchy == null)
+		if (fgMarkerTypeHierarchy == null) {
 			fgMarkerTypeHierarchy= new MarkerTypeHierarchy();
+		}
 		return fgMarkerTypeHierarchy.getSuperTypes(markerType);
 	}
 
@@ -420,7 +431,7 @@ public final class MarkerUtilities {
 	 * This method changes resources; these changes will be reported in a subsequent resource change
 	 * event, including an indication that this marker has been modified.
 	 * </p>
-	 * 
+	 *
 	 * @param marker the marker
 	 * @param attributeChanges map with to be executed attribute changes
 	 * @see IMarker#setAttributes(String[], Object[])

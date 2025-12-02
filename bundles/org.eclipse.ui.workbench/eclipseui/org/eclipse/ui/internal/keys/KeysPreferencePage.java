@@ -1209,8 +1209,8 @@ public final class KeysPreferencePage extends PreferencePage implements IWorkben
 	 */
 	private void selectedButtonExport() {
 		final FileDialog fileDialog = new FileDialog(getShell(), SWT.SAVE | SWT.SHEET);
-		fileDialog.setFilterExtensions(new String[] { "*.csv" }); //$NON-NLS-1$
-		fileDialog.setFilterNames(new String[] { Util.translateString(RESOURCE_BUNDLE, "csvFilterName") }); //$NON-NLS-1$
+		fileDialog.setFilterExtensions("*.csv"); //$NON-NLS-1$
+		fileDialog.setFilterNames(Util.translateString(RESOURCE_BUNDLE, "csvFilterName")); //$NON-NLS-1$
 		final String filePath = fileDialog.open();
 		if (filePath == null) {
 			return;
@@ -1581,7 +1581,7 @@ public final class KeysPreferencePage extends PreferencePage implements IWorkben
 					while (iterator2.hasNext()) {
 						Category category = iterator2.next();
 						String uniqueName = MessageFormat.format(Util.translateString(RESOURCE_BUNDLE, "uniqueName"), //$NON-NLS-1$
-							new Object[] { name, category.getId() });
+							name, category.getId());
 						categoryIdsByUniqueName.put(uniqueName, category.getId());
 						categoryUniqueNamesById.put(category.getId(), uniqueName);
 					}
@@ -1604,7 +1604,7 @@ public final class KeysPreferencePage extends PreferencePage implements IWorkben
 					while (iterator2.hasNext()) {
 						Scheme scheme = iterator2.next();
 						String uniqueName = MessageFormat.format(Util.translateString(RESOURCE_BUNDLE, "uniqueName"), //$NON-NLS-1$
-							new Object[] { name, scheme.getId() });
+							name, scheme.getId());
 						schemeIdsByUniqueName.put(uniqueName, scheme.getId());
 						schemeUniqueNamesById.put(scheme.getId(), uniqueName);
 					}

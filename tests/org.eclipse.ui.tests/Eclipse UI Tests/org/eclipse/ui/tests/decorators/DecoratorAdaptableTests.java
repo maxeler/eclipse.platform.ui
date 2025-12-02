@@ -20,11 +20,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.internal.decorators.DecorationResult;
 import org.eclipse.ui.internal.decorators.DecoratorManager;
 import org.eclipse.ui.internal.decorators.LightweightDecoratorManager;
+import org.eclipse.ui.tests.harness.util.UITestUtil;
 import org.eclipse.ui.tests.menus.ObjectContributionClasses;
 import org.junit.After;
 import org.junit.Before;
@@ -41,6 +43,21 @@ public class DecoratorAdaptableTests {
 		LightweightDecoratorManager ldm = dm.getLightweightManager();
 		DecorationResult result = ldm.getDecorationResult(object);
 		return result.decorateWithText("Default label");
+	}
+
+	/**
+	 * Waits for all decorator-related jobs to complete.
+	 * This ensures that decorator enablement changes have been fully processed
+	 * before tests check decoration results.
+	 */
+	private void waitForDecoratorJobs() {
+		try {
+			Job.getJobManager().join(DecoratorManager.FAMILY_DECORATE, null);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		// Also process any pending UI events
+		UITestUtil.processEvents();
 	}
 
 	private void assertDecorated(String testSubName, String[] expectedSuffixes, Object[] elements,
@@ -63,6 +80,10 @@ public class DecoratorAdaptableTests {
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestUnadaptableDecoratorContributor.ID, true);
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestResourceDecoratorContributor.ID, true);
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestResourceMappingDecoratorContributor.ID, true);
+
+		// Wait for all decorator jobs to complete after enabling decorators
+		// This prevents race conditions where decorators may not be fully initialized yet
+		waitForDecoratorJobs();
 	}
 
 	@After
@@ -71,6 +92,9 @@ public class DecoratorAdaptableTests {
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestUnadaptableDecoratorContributor.ID, false);
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestResourceDecoratorContributor.ID, false);
 		PlatformUI.getWorkbench().getDecoratorManager().setEnabled(TestResourceMappingDecoratorContributor.ID, false);
+
+		// Wait for all decorator jobs to complete to ensure clean state for next test
+		waitForDecoratorJobs();
 	}
 
 	/**

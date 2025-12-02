@@ -50,7 +50,7 @@ public class TextContentAssistSubjectAdapter extends AbstractControlContentAssis
 		/**
 		 * Updates this document with changes in this adapter's text widget.
 		 */
-		private ModifyListener fModifyListener;
+		private final ModifyListener fModifyListener;
 
 		private InternalDocument() {
 			super(fText.getText());
@@ -68,35 +68,40 @@ public class TextContentAssistSubjectAdapter extends AbstractControlContentAssis
 	}
 
 	/** The text. */
-	private Text fText;
+	private final Text fText;
 	/** The modify listeners. */
-	private HashMap<SelectionListener, Listener> fModifyListeners= new HashMap<>();
+	private final HashMap<SelectionListener, Listener> fModifyListeners= new HashMap<>();
 
 	/**
 	 * Creates a content assist subject control adapter for the given text widget.
 	 *
 	 * @param text the text widget to adapt
 	 */
+	@Deprecated
 	public TextContentAssistSubjectAdapter(Text text) {
 		Assert.isNotNull(text);
 		fText= text;
 	}
 
+	@Deprecated
 	@Override
 	public Control getControl() {
 		return fText;
 	}
 
+	@Deprecated
 	@Override
 	public int getLineHeight() {
 		return fText.getLineHeight();
 	}
 
+	@Deprecated
 	@Override
 	public int getCaretOffset() {
 		return fText.getCaretPosition();
 	}
 
+	@Deprecated
 	@Override
 	public Point getLocationAtOffset(int offset) {
 		Point caretLocation= fText.getCaretLocation();
@@ -107,16 +112,19 @@ public class TextContentAssistSubjectAdapter extends AbstractControlContentAssis
 		return caretLocation;
 	}
 
+	@Deprecated
 	@Override
 	public Point getWidgetSelectionRange() {
 		return new Point(fText.getSelection().x, Math.abs(fText.getSelection().y - fText.getSelection().x));
 	}
 
+	@Deprecated
 	@Override
 	public Point getSelectedRange() {
 		return new Point(fText.getSelection().x, Math.abs(fText.getSelection().y - fText.getSelection().x));
 	}
 
+	@Deprecated
 	@Override
 	public IDocument getDocument() {
 		IDocument document= (IDocument)fText.getData("document"); //$NON-NLS-1$
@@ -127,17 +135,20 @@ public class TextContentAssistSubjectAdapter extends AbstractControlContentAssis
 		return document;
 	}
 
+	@Deprecated
 	@Override
 	public void setSelectedRange(int i, int j) {
 		fText.setSelection(new Point(i, i+j));
 	}
 
+	@Deprecated
 	@Override
 	public void revealRange(int i, int j) {
 		// XXX: this should be improved
 		fText.setSelection(new Point(i, i+j));
 	}
 
+	@Deprecated
 	@Override
 	public boolean addSelectionListener(final SelectionListener selectionListener) {
 		fText.addSelectionListener(selectionListener);
@@ -147,11 +158,13 @@ public class TextContentAssistSubjectAdapter extends AbstractControlContentAssis
 		return true;
 	}
 
+	@Deprecated
 	@Override
 	public void removeSelectionListener(SelectionListener selectionListener) {
 		fText.removeSelectionListener(selectionListener);
 		Listener listener= fModifyListeners.get(selectionListener);
-		if (listener != null)
+		if (listener != null) {
 			fText.removeListener(SWT.Modify, listener);
+		}
 	}
 }

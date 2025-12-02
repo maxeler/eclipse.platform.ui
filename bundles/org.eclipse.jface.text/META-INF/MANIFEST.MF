@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.jface.text
-Bundle-Version: 3.28.100.qualifier
+Bundle-Version: 3.29.0.qualifier
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
 Export-Package: 
@@ -40,4 +40,6 @@ Require-Bundle:
 Import-Package: com.ibm.icu.text
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.eclipse.jface.text
+Bundle-Activator: org.eclipse.jface.text.Activator
+Bundle-ActivationPolicy: lazy
 Require-Capability: eclipse.swt;filter:="(image.format=svg)"

@@ -53,16 +53,17 @@ import org.eclipse.jface.text.IEventConsumer;
 @Deprecated
 public abstract class AbstractControlContentAssistSubjectAdapter implements IContentAssistSubjectControl {
 
+	@Deprecated
 	protected static final boolean DEBUG= "true".equalsIgnoreCase(Platform.getDebugOption("org.eclipse.jface.text/debug/ContentAssistSubjectAdapters"));  //$NON-NLS-1$//$NON-NLS-2$
 
 	/**
 	 * VerifyKeyListeners for the control.
 	 */
-	private List<VerifyKeyListener> fVerifyKeyListeners;
+	private final List<VerifyKeyListener> fVerifyKeyListeners;
 	/**
 	 * KeyListeners for the control.
 	 */
-	private Set<KeyListener> fKeyListeners;
+	private final Set<KeyListener> fKeyListeners;
 	/**
 	 * The Listener installed on the control which passes events to
 	 * {@link #fVerifyKeyListeners fVerifyKeyListeners} and {@link #fKeyListeners}.
@@ -87,81 +88,97 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 	/**
 	 * Creates a new {@link AbstractControlContentAssistSubjectAdapter}.
 	 */
+	@Deprecated
 	public AbstractControlContentAssistSubjectAdapter() {
 		fVerifyKeyListeners= new ArrayList<>(1);
 		fKeyListeners= new HashSet<>(1);
 	}
 
+	@Deprecated
 	@Override
 	public abstract Control getControl();
 
+	@Deprecated
 	@Override
 	public void addKeyListener(KeyListener keyListener) {
 		fKeyListeners.add(keyListener);
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#addKeyListener()"); //$NON-NLS-1$
+		}
 
 		installControlListener();
 	}
 
+	@Deprecated
 	@Override
 	public void removeKeyListener(KeyListener keyListener) {
 		boolean deleted= fKeyListeners.remove(keyListener);
 
 		if (DEBUG) {
-			if (!deleted)
+			if (!deleted) {
 				System.out.println("removeKeyListener -> wasn't here"); //$NON-NLS-1$
+			}
 			System.out.println("AbstractControlContentAssistSubjectAdapter#removeKeyListener() -> " + fKeyListeners.size()); //$NON-NLS-1$
 		}
 
 		uninstallControlListener();
 	}
 
+	@Deprecated
 	@Override
 	public boolean supportsVerifyKeyListener() {
 		return true;
 	}
 
+	@Deprecated
 	@Override
 	public boolean appendVerifyKeyListener(final VerifyKeyListener verifyKeyListener) {
 		fVerifyKeyListeners.add(verifyKeyListener);
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#appendVerifyKeyListener() -> " + fVerifyKeyListeners.size()); //$NON-NLS-1$
+		}
 
 		installControlListener();
 		return true;
 	}
 
+	@Deprecated
 	@Override
 	public boolean prependVerifyKeyListener(final VerifyKeyListener verifyKeyListener) {
 		fVerifyKeyListeners.add(0, verifyKeyListener);
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#prependVerifyKeyListener() -> " + fVerifyKeyListeners.size()); //$NON-NLS-1$
+		}
 
 		installControlListener();
 		return true;
 	}
 
+	@Deprecated
 	@Override
 	public void removeVerifyKeyListener(VerifyKeyListener verifyKeyListener) {
 		fVerifyKeyListeners.remove(verifyKeyListener);
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#removeVerifyKeyListener() -> " + fVerifyKeyListeners.size()); //$NON-NLS-1$
+		}
 
 		uninstallControlListener();
 	}
 
+	@Deprecated
 	@Override
 	public void setEventConsumer(IEventConsumer eventConsumer) {
 		// this is not supported
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#setEventConsumer()"); //$NON-NLS-1$
+		}
 	}
 
+	@Deprecated
 	@Override
 	public String getLineDelimiter() {
 		return System.lineSeparator();
@@ -172,24 +189,28 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 	 * passing them to {@link #fVerifyKeyListeners} and {@link #fKeyListeners}.
 	 */
 	private void installControlListener() {
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#installControlListener() -> k: " + fKeyListeners.size() + ", v: " + fVerifyKeyListeners.size()); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 
-		if (fControlListener != null)
+		if (fControlListener != null) {
 			return;
+		}
 
 		fControlListener= new Listener() {
 			@Override
 			public void handleEvent(Event e) {
-				if (! getControl().isFocusControl())
+				if (! getControl().isFocusControl()) {
 					return; //SWT.TRAVERSE_MNEMONIC events can also come in to inactive widgets
+				}
 				VerifyEvent verifyEvent= new VerifyEvent(e);
 				KeyEvent keyEvent= new KeyEvent(e);
 				switch (e.type) {
 					case SWT.Traverse :
 
-						if (DEBUG)
+						if (DEBUG) {
 							dump("before traverse", e, verifyEvent); //$NON-NLS-1$
+						}
 
 						verifyEvent.doit= true;
 						for (VerifyKeyListener verifyKeyListener : fVerifyKeyListeners) {
@@ -197,13 +218,15 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 							if (! verifyEvent.doit) {
 								e.detail= SWT.TRAVERSE_NONE;
 								e.doit= true;
-								if (DEBUG)
+								if (DEBUG) {
 									dump("traverse eaten by verify", e, verifyEvent); //$NON-NLS-1$
+								}
 								return;
 							}
 
-							if (DEBUG)
+							if (DEBUG) {
 								dump("traverse OK", e, verifyEvent); //$NON-NLS-1$
+							}
 						}
 						break;
 
@@ -212,14 +235,16 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 							verifyKeyListener.verifyKey(verifyEvent);
 							if (! verifyEvent.doit) {
 								e.doit= verifyEvent.doit;
-								if (DEBUG)
+								if (DEBUG) {
 									dump("keyDown eaten by verify", e, verifyEvent); //$NON-NLS-1$
+								}
 								return;
 							}
 						}
 
-						if (DEBUG)
+						if (DEBUG) {
 							dump("keyDown OK", e, verifyEvent); //$NON-NLS-1$
+						}
 
 						for (KeyListener keyListener : fKeyListeners) {
 							keyListener.keyPressed(keyEvent);
@@ -263,8 +288,9 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 		getControl().addListener(SWT.Traverse, fControlListener);
 		getControl().addListener(SWT.KeyDown, fControlListener);
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#installControlListener() - installed"); //$NON-NLS-1$
+		}
 	}
 
 	/**
@@ -275,8 +301,9 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 	private void uninstallControlListener() {
 		if (fControlListener == null || fKeyListeners.size() + fVerifyKeyListeners.size() != 0) {
 
-			if (DEBUG)
+			if (DEBUG) {
 				System.out.println("AbstractControlContentAssistSubjectAdapter#uninstallControlListener() -> k: " + fKeyListeners.size() + ", v: " + fVerifyKeyListeners.size()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 
 			return;
 		}
@@ -284,8 +311,9 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 		getControl().removeListener(SWT.KeyDown, fControlListener);
 		fControlListener= null;
 
-		if (DEBUG)
+		if (DEBUG) {
 			System.out.println("AbstractControlContentAssistSubjectAdapter#uninstallControlListener() - done"); //$NON-NLS-1$
+		}
 	}
 
 	/**
@@ -312,6 +340,7 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 	 * @param labelProvider a {@link ILabelProvider}, or <code>null</code>
 	 * 	if no visual feedback should be shown
 	 */
+	@Deprecated
 	public void setContentAssistCueProvider(final ILabelProvider labelProvider) {
 		if (fCueLabelProvider != null) {
 			fCueLabelProvider.dispose();
@@ -349,8 +378,9 @@ public abstract class AbstractControlContentAssistSubjectAdapter implements ICon
 			ILabelProviderListener listener= event -> {
 				fControlDecoration.setDescriptionText(labelProvider.getText(getControl()));
 				Image image= labelProvider.getImage(getControl());
-				if (image == null)
+				if (image == null) {
 					image= getDefaultCueImage();
+				}
 				fControlDecoration.setImage(image);
 			};
 			labelProvider.addListener(listener);

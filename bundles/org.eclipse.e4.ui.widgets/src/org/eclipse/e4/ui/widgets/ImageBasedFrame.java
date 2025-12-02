@@ -33,7 +33,7 @@ public class ImageBasedFrame extends Canvas {
 
 	private static final String FRAME_IMAGE= "frameImage"; //$NON-NLS-1$
 
-	private Control framedControl;
+	private final Control framedControl;
 
 	private boolean draggable = true;
 	private boolean vertical = true;
@@ -67,6 +67,9 @@ public class ImageBasedFrame extends Canvas {
 			frame.setCursor(null);
 		});
 		toWrap.addListener(SWT.ZoomChanged, event -> {
+			if (isDisposed()) {
+				return;
+			}
 			toWrap.pack(true);
 			setFramedControlLocation();
 		});
@@ -117,8 +120,9 @@ public class ImageBasedFrame extends Canvas {
 
 	public Rectangle getHandleRect() {
 		Rectangle handleRect = new Rectangle(0, 0, 0, 0);
-		if (!draggable || handle.isDisposed())
+		if (!draggable || handle.isDisposed()) {
 			return handleRect;
+		}
 
 		if (vertical) {
 			handleRect.x = w1;
@@ -136,8 +140,9 @@ public class ImageBasedFrame extends Canvas {
 
 	@Override
 	public Point computeSize(int wHint, int hHint) {
-		if (framedControl == null || framedControl.isDisposed())
+		if (framedControl == null || framedControl.isDisposed()) {
 			return new Point(0, 0);
+		}
 
 		if (vertical) {
 			int width = w1 + framedControl.getSize().x + w3;
@@ -156,8 +161,9 @@ public class ImageBasedFrame extends Canvas {
 			return;
 		}
 
-		if (framedControl == null || framedControl.isDisposed())
+		if (framedControl == null || framedControl.isDisposed()) {
 			return;
+		}
 
 		Point inner = framedControl.getSize();
 		int handleWidth = (handle != null && !vertical) ? handle.getBounds().width

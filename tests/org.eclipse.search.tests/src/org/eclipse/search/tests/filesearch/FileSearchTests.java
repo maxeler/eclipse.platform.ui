@@ -15,7 +15,8 @@
  *******************************************************************************/
 package org.eclipse.search.tests.filesearch;
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
@@ -24,16 +25,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import org.eclipse.core.runtime.ContributorFactorySimple;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IContributor;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.content.IContentType;
+import org.eclipse.core.runtime.content.IContentTypeManager;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -120,17 +123,17 @@ public class FileSearchTests {
 
 	}
 
-	@ClassRule
-	public static JUnitSourceSetup fgJUnitSource= new JUnitSourceSetup();
+	@RegisterExtension
+	static JUnitSourceSetup fgJUnitSource= new JUnitSourceSetup();
 
 	private IProject fProject;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception{
 		fProject= ResourceHelper.createProject("my-project"); //$NON-NLS-1$
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		ResourceHelper.deleteProject("my-project"); //$NON-NLS-1$
 	}
@@ -161,7 +164,7 @@ public class FileSearchTests {
 		TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 		TestResult[] results= collector.getResults();
-		assertEquals("Number of total results", 4, results.length);
+		assertEquals(4, results.length, "Number of total results");
 
 		assertMatches(results, 2, file1, buf.toString(), "hello");
 		assertMatches(results, 2, file2, buf.toString(), "hello");
@@ -194,7 +197,7 @@ public class FileSearchTests {
 		TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 		TestResult[] results= collector.getResults();
-		assertEquals("Number of total results", 6, results.length);
+		assertEquals(6, results.length, "Number of total results");
 	}
 
 	@Test
@@ -224,7 +227,7 @@ public class FileSearchTests {
 		TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 		TestResult[] results= collector.getResults();
-		assertEquals("Number of total results", 4, results.length);
+		assertEquals(4, results.length, "Number of total results");
 	}
 
 	@Test
@@ -262,7 +265,7 @@ public class FileSearchTests {
 			TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 			TestResult[] results= collector.getResults();
-			assertEquals("Number of total results", 748, results.length);
+			assertEquals(748, results.length, "Number of total results");
 			long end= System.currentTimeMillis();
 			System.out.println("time= " + (end - start));
 		} finally {
@@ -309,20 +312,20 @@ public class FileSearchTests {
 			Pattern searchPattern= PatternConstructor.createPattern("h?ll", false, true, false, false);
 			collector.reset();
 			engine.search(scope, collector, searchPattern, null);
-			assertEquals("Number of partial-word results", 22, collector.getNumberOfResults());
+			assertEquals(22, collector.getNumberOfResults(), "Number of partial-word results");
 		}
 		{
 			// wildcards, whole word = true: match only nothing and non-word chars before and after
 			Pattern searchPattern= PatternConstructor.createPattern("h?ll", false, true, false, true);
 			collector.reset();
 			engine.search(scope, collector, searchPattern, null);
-			assertEquals("Number of whole-word results", 10, collector.getNumberOfResults());
+			assertEquals(10, collector.getNumberOfResults(), "Number of whole-word results");
 		}
 		// regexp, whole word = false: match all lines
 		Pattern searchPattern= PatternConstructor.createPattern("h[eio]ll", true, true, false, false);
 		collector.reset();
 		engine.search(scope, collector, searchPattern, null);
-		assertEquals("Number of partial-word results", 22, collector.getNumberOfResults());
+		assertEquals(22, collector.getNumberOfResults(), "Number of partial-word results");
 	}
 
 	@Test
@@ -354,7 +357,7 @@ public class FileSearchTests {
 			TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 			TestResult[] results= collector.getResults();
-			assertEquals("Number of total results", 4, results.length);
+			assertEquals(4, results.length, "Number of total results");
 
 			assertMatches(results, 2, file1, buf.toString(), "hello");
 			assertMatches(results, 2, file2, buf.toString(), "hello");
@@ -510,39 +513,39 @@ public class FileSearchTests {
 		String[] fileNamePatterns= { "*" };
 
 		TestResult[] results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 4, results.length);
+		assertEquals(4, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "*.x" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 2, results.length);
+		assertEquals(2, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "*.x", "*.y*" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 3, results.length);
+		assertEquals(3, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "!*.x" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 2, results.length);
+		assertEquals(2, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "!*.x", "!*.y" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 1, results.length);
+		assertEquals(1, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "*", "!*.y" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 3, results.length);
+		assertEquals(3, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "*", "!*.*" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 0, results.length);
+		assertEquals(0, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "*.x", "*.y*", "!*.y" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 2, results.length);
+		assertEquals(2, results.length, "Number of total results");
 
 		fileNamePatterns= new String[] { "file*", "!*.x*", "!*.y" };
 		results= performSearch(collector, fileNamePatterns, searchPattern);
-		assertEquals("Number of total results", 1, results.length);
+		assertEquals(1, results.length, "Number of total results");
 	}
 
 	private TestResult[] performSearch(TestResultCollector collector, String[] fileNamePatterns, Pattern searchPattern) {
@@ -600,17 +603,39 @@ public class FileSearchTests {
 						.forEach(extension -> registry.removeExtension(extension, masterToken));
 			}) {
 
-				IFolder folder= ResourceHelper.createFolder(fProject.getFolder("folder1"));
+				// Wait for content type to be registered and available
+				// This prevents race conditions where the content type might not be immediately available
+				IContentTypeManager contentTypeManager= Platform.getContentTypeManager();
+				IContentType binaryContentType= null;
+				for (int i= 0; i < 50 && binaryContentType == null; i++) {
+					binaryContentType= contentTypeManager.getContentType("org.eclipse.search.tests.binaryFile");
+					if (binaryContentType == null) {
+						Thread.sleep(10); // Wait 10ms before retrying
+					}
+				}
+				if (binaryContentType == null) {
+					throw new AssertionError("Content type 'org.eclipse.search.tests.binaryFile' was not registered");
+				}
+
+				// Use unique folder name to avoid conflicts with other tests running in parallel
+				String uniqueFolderName= "binaryContentTypeTest-" + java.util.UUID.randomUUID().toString();
+				IFolder folder= ResourceHelper.createFolder(fProject.getFolder(uniqueFolderName));
 				IFile textfile= ResourceHelper.createFile(folder, "textfile", "text hello");
 				IFile binaryfile= ResourceHelper.createFile(folder, "binaryfile", "binary hello");
 
+				// Force content type detection on files to ensure the newly registered content type is applied
+				// This helps avoid race conditions where the content type might not be immediately available
+				textfile.getContentDescription();
+				binaryfile.getContentDescription();
+
 				Pattern searchPattern= PatternConstructor.createPattern("hello", true, false);
 
-				FileTextSearchScope scope= FileTextSearchScope.newSearchScope(new IResource[] { fProject }, (String[]) null, false);
+				// Search only in the unique folder to avoid interference from other tests
+				FileTextSearchScope scope= FileTextSearchScope.newSearchScope(new IResource[] { folder }, (String[]) null, false);
 				TextSearchEngine.create().search(scope, collector, searchPattern, null);
 
 				TestResult[] results= collector.getResults();
-				assertEquals("Number of total results", 1, results.length);
+				assertEquals(1, results.length, "Number of total results");
 
 				assertMatches(results, 1, textfile, "text hello", "hello");
 				assertMatches(results, 0, binaryfile, "binary hello", "hello");
@@ -625,10 +650,10 @@ public class FileSearchTests {
 		for (TestResult curr : results) {
 			if (file.equals(curr.resource)) {
 				k++;
-				assertEquals("Wrong positions", string, fileContent.substring(curr.offset, curr.offset + curr.length));
+				assertEquals(string, fileContent.substring(curr.offset, curr.offset + curr.length), "Wrong positions");
 			}
 		}
-		assertEquals("Number of results in file", expectedCount, k);
+		assertEquals(expectedCount, k, "Number of results in file");
 	}
 
 

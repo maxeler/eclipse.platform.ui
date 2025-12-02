@@ -65,7 +65,7 @@ final class ColumnLayout extends Layout {
 			COLUMN_TRIM = 3;
 		}
 	}
-	private List<ColumnLayoutData> columns= new ArrayList<>();
+	private final List<ColumnLayoutData> columns= new ArrayList<>();
 
 	/**
 	 * Adds a new column of data to this table layout.
@@ -83,21 +83,20 @@ final class ColumnLayout extends Layout {
 		int size= columns.size();
 		for (int i= 0; i < size; ++i) {
 			ColumnLayoutData layoutData= columns.get(i);
-			if (layoutData instanceof ColumnPixelData) {
-				ColumnPixelData col= (ColumnPixelData) layoutData;
+			if (layoutData instanceof ColumnPixelData col) {
 				width += col.width;
 				if (col.addTrim) {
 					width += COLUMN_TRIM;
 				}
-			} else if (layoutData instanceof ColumnWeightData) {
-				ColumnWeightData col= (ColumnWeightData) layoutData;
+			} else if (layoutData instanceof ColumnWeightData col) {
 				width += col.minimumWidth;
 			} else {
 				Assert.isTrue(false, "Unknown column layout data"); //$NON-NLS-1$
 			}
 		}
-		if (width > result.x)
+		if (width > result.x) {
 			result.x= width;
+		}
 		return result;
 	}
 
@@ -116,16 +115,14 @@ final class ColumnLayout extends Layout {
 		// First calc space occupied by fixed columns
 		for (int i= 0; i < size; i++) {
 			ColumnLayoutData col= columns.get(i);
-			if (col instanceof ColumnPixelData) {
-				ColumnPixelData cpd= (ColumnPixelData) col;
+			if (col instanceof ColumnPixelData cpd) {
 				int pixels= cpd.width;
 				if (cpd.addTrim) {
 					pixels += COLUMN_TRIM;
 				}
 				widths[i]= pixels;
 				fixedWidth += pixels;
-			} else if (col instanceof ColumnWeightData) {
-				ColumnWeightData cw= (ColumnWeightData) col;
+			} else if (col instanceof ColumnWeightData cw) {
 				weightIteration[numberOfWeightColumns]= i;
 				numberOfWeightColumns++;
 				totalWeight += cw.weight;
@@ -193,8 +190,9 @@ final class ColumnLayout extends Layout {
 		int trim= computeTrim(area, table, tableWidth);
 		int width= Math.max(0, area.width - trim);
 
-		if (width > 1)
+		if (width > 1) {
 			layoutTable(table, width, area, tableWidth < area.width);
+		}
 
 		if( composite.getData(RECALCULATE_LAYOUT) == null ) {
 			composite.setData(RECALCULATE_LAYOUT, Boolean.FALSE);

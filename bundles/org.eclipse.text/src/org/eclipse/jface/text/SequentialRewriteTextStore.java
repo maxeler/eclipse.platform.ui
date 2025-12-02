@@ -59,6 +59,7 @@ public class SequentialRewriteTextStore implements ITextStore {
 	 *
 	 * @param source the source text store
 	 */
+	@Deprecated
 	public SequentialRewriteTextStore(ITextStore source) {
 		fReplaceList= new LinkedList<>();
 		fSource= source;
@@ -69,15 +70,18 @@ public class SequentialRewriteTextStore implements ITextStore {
 	 *
 	 * @return  the source store of this rewrite store
 	 */
+	@Deprecated
 	public ITextStore getSourceStore() {
 		commit();
 		return fSource;
 	}
 
+	@Deprecated
 	@Override
 	public void replace(int offset, int length, String text) {
-		if (text == null)
+		if (text == null) {
 			text= ""; //$NON-NLS-1$
+		}
 
 		if (fReplaceList.isEmpty()) {
 			fReplaceList.add(new Replace(offset, offset, length, text));
@@ -112,17 +116,20 @@ public class SequentialRewriteTextStore implements ITextStore {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public void set(String text) {
 		fSource.set(text);
 		fReplaceList.clear();
 	}
 
+	@Deprecated
 	@Override
 	public String get(int offset, int length) {
 
-		if (fReplaceList.isEmpty())
+		if (fReplaceList.isEmpty()) {
 			return fSource.get(offset, length);
+		}
 
 
 		Replace firstReplace= fReplaceList.getFirst();
@@ -176,10 +183,12 @@ public class SequentialRewriteTextStore implements ITextStore {
 		return replace.newOffset - replace.offset + replace.text.length() - replace.length;
 	}
 
+	@Deprecated
 	@Override
 	public char get(int offset) {
-		if (fReplaceList.isEmpty())
+		if (fReplaceList.isEmpty()) {
 			return fSource.get(offset);
+		}
 
 		Replace firstReplace= fReplaceList.getFirst();
 		Replace lastReplace= fReplaceList.getLast();
@@ -200,11 +209,11 @@ public class SequentialRewriteTextStore implements ITextStore {
 
 			int delta= 0;
 			for (Replace replace : fReplaceList) {
-				if (offset < replace.newOffset)
+				if (offset < replace.newOffset) {
 					return fSource.get(offset - delta);
-
-				else if (offset < replace.newOffset + replace.text.length())
+				} else if (offset < replace.newOffset + replace.text.length()) {
 					return replace.text.charAt(offset - replace.newOffset);
+				}
 
 				delta= getDelta(replace);
 			}
@@ -213,10 +222,12 @@ public class SequentialRewriteTextStore implements ITextStore {
 		}
 	}
 
+	@Deprecated
 	@Override
 	public int getLength() {
-		if (fReplaceList.isEmpty())
+		if (fReplaceList.isEmpty()) {
 			return fSource.getLength();
+		}
 
 		Replace lastReplace= fReplaceList.getLast();
 		return fSource.getLength() + getDelta(lastReplace);
@@ -225,6 +236,7 @@ public class SequentialRewriteTextStore implements ITextStore {
 	/**
 	 * Disposes this rewrite store.
 	 */
+	@Deprecated
 	public void dispose() {
 		fReplaceList= null;
 		fSource= null;
@@ -235,8 +247,9 @@ public class SequentialRewriteTextStore implements ITextStore {
 	 */
 	private void commit() {
 
-		if (fReplaceList.isEmpty())
+		if (fReplaceList.isEmpty()) {
 			return;
+		}
 
 		StringBuilder buffer= new StringBuilder();
 

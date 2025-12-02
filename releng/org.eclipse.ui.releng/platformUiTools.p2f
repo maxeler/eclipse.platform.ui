@@ -109,12 +109,17 @@
     </iu>
     <iu id='com.yourkit.profiler.feature.group' name='Yourkit' version='0.0.0'>
         <repositories size='1'>
-            <repository location='https://www.yourkit.com/download/yjp2025_3_for_eclipse/'/>
+            <repository location='https://www.yourkit.com/download/yjp2025_9_for_eclipse/'/>
         </repositories>
     </iu>
     <iu id='com.microsoft.copilot.eclipse.feature.feature.group' name='Github Copilot' version='0.0.0'>
         <repositories size='1'>
             <repository location='https://azuredownloads-g3ahgwb5b8bkbxhd.b01.azurefd.net/github-copilot-eclipse-nightly/'/>
+        </repositories>
+    </iu>
+    <iu id='org.eclipse.lsp4e' name='org.eclipse.lsp4e' version='0.0.0'>
+        <repositories size='1'>
+            <repository location='https://download.eclipse.org/lsp4e/releases/latest/'/>
         </repositories>
     </iu>
     <iu id='org.eclipse.swt.tools.feature.feature.group' name='SWT Tools' version='0.0.0'>
@@ -128,6 +133,11 @@
         </repositories>
     </iu>
     <iu id='org.eclipse.cdt.core.native' name='CDT native bits' version='0.0.0'>
+        <repositories size='1'>
+            <repository location='https://download.eclipse.org/eclipse/updates/I-builds'/>
+        </repositories>
+    </iu>
+    <iu id='org.eclipse.terminal.feature.feature.group' name='Terminal feature' version='0.0.0'>
         <repositories size='1'>
             <repository location='https://download.eclipse.org/eclipse/updates/I-builds'/>
         </repositories>

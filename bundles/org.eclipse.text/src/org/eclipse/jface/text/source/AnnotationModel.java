@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.runtime.Assert;
@@ -61,7 +62,7 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 		private final boolean fCanStartBefore;
 		private final IAnnotationModel fModel;
 		private Annotation fNext;
-		private Position fRegion;
+		private final Position fRegion;
 
 		/**
 		 * Iterator that returns all annotations from the parent iterator which
@@ -95,8 +96,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 
 		@Override
 		public Annotation next() {
-			if (!hasNext())
+			if (!hasNext()) {
 				throw new NoSuchElementException();
+			}
 
 			Annotation result= fNext;
 			fNext= findNext();
@@ -114,22 +116,24 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 				Position position= fModel.getPosition(next);
 				if (position != null) {
 					int offset= position.getOffset();
-					if (isWithinRegion(offset, position.getLength()))
+					if (isWithinRegion(offset, position.getLength())) {
 						return next;
+					}
 				}
 			}
 			return null;
 		}
 
 		private boolean isWithinRegion(int start, int length) {
-			if (fCanStartBefore && fCanEndAfter)
+			if (fCanStartBefore && fCanEndAfter) {
 				return fRegion.overlapsWith(start, length);
-			else if (fCanStartBefore)
+			} else if (fCanStartBefore) {
 				return fRegion.includes(start + length - (length > 0 ? 1 : 0));
-			else if (fCanEndAfter)
+			} else if (fCanEndAfter) {
 				return fRegion.includes(start);
-			else
+			} else {
 				return fRegion.includes(start) && fRegion.includes(start + length - (length > 0 ? 1 : 0));
+			}
 		}
 	}
 
@@ -178,8 +182,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			while (fIndex < fPositions.length) {
 				Position position= fPositions[fIndex];
 				fIndex++;
-				if (fMap.containsKey(position))
+				if (fMap.containsKey(position)) {
 					return fMap.get(position);
+				}
 			}
 
 			return null;
@@ -195,7 +200,7 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	private static class MetaIterator<E> implements Iterator<E> {
 
 		/** The iterator over a list of iterators. */
-		private Iterator<? extends Iterator<? extends E>> fSuperIterator;
+		private final Iterator<? extends Iterator<? extends E>> fSuperIterator;
 		/** The current iterator. */
 		private Iterator<? extends E> fCurrent;
 		/** The current element. */
@@ -214,8 +219,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 
 		@Override
 		public boolean hasNext() {
-			if (fCurrentElement != null)
+			if (fCurrentElement != null) {
 				return true;
+			}
 
 			if (fCurrent.hasNext()) {
 				fCurrentElement= fCurrent.next();
@@ -223,14 +229,16 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			} else if (fSuperIterator.hasNext()) {
 				fCurrent= fSuperIterator.next();
 				return hasNext();
-			} else
+			} else {
 				return false;
+			}
 		}
 
 		@Override
 		public E next() {
-			if (!hasNext())
+			if (!hasNext()) {
 				throw new NoSuchElementException();
+			}
 
 			E element= fCurrentElement;
 			fCurrentElement= null;
@@ -267,7 +275,7 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 * The map which maps {@link Position} to {@link Annotation}.
 	 * @since 3.4
 	 **/
-	private IdentityHashMap<Position, Annotation> fPositions;
+	private final IdentityHashMap<Position, Annotation> fPositions;
 	/** The list of annotation model listeners */
 	protected ArrayList<IAnnotationModelListener> fAnnotationModelListeners;
 	/** The document connected with this model */
@@ -275,19 +283,19 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	/** The number of open connections to the same document */
 	private int fOpenConnections= 0;
 	/** The document listener for tracking whether document positions might have been changed. */
-	private IDocumentListener fDocumentListener;
+	private final IDocumentListener fDocumentListener;
 	/** The flag indicating whether the document positions might have been changed. */
 	private boolean fDocumentChanged= true;
 	/**
 	 * The model's attachment.
 	 * @since 3.0
 	 */
-	private Map<Object, IAnnotationModel> fAttachments= new ConcurrentHashMap<>();
+	private final Map<Object, IAnnotationModel> fAttachments= new ConcurrentHashMap<>();
 	/**
 	 * The annotation model listener on attached sub-models.
 	 * @since 3.0
 	 */
-	private IAnnotationModelListener fModelListener= new InternalModelListener();
+	private final IAnnotationModelListener fModelListener= new InternalModelListener();
 	/**
 	 * The current annotation model event.
 	 * @since 3.0
@@ -331,11 +339,30 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 		return (IAnnotationMap) fAnnotations;
 	}
 
+	/**
+	 * Subclasses should <b>never</b> return null. Clients should use the lock
+	 * object in order to synchronize concurrent access to the internal map data.
+	 *
+	 * @return <b>never</b> returns null
+	 */
 	@Override
 	public Object getLockObject() {
-		return getAnnotationMap().getLockObject();
+		return Objects.requireNonNull(getAnnotationMap().getLockObject());
 	}
 
+	/**
+	 * Sets the lock object for this object. Subsequent calls to specified methods of this object
+	 * are synchronized on this lock object. Which methods are synchronized is specified by the
+	 * implementer.
+	 *
+	 * <p>
+	 * <em>You should not override an existing lock object unless you own that lock object yourself.
+	 * Use the existing lock object instead.</em>
+	 * </p>
+	 *
+	 * @param lockObject the lock object. If <code>null</code> is given, default implementation uses
+	 *            the internal lock object for locking.
+	 */
 	@Override
 	public void setLockObject(Object lockObject) {
 		getAnnotationMap().setLockObject(lockObject);
@@ -391,8 +418,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	protected void replaceAnnotations(Annotation[] annotationsToRemove, Map<? extends Annotation, ? extends Position> annotationsToAdd, boolean fireModelChanged) throws BadLocationException {
 
 		if (annotationsToRemove != null) {
-			for (Annotation element : annotationsToRemove)
+			for (Annotation element : annotationsToRemove) {
 				removeAnnotation(element, false);
+			}
 		}
 
 		if (annotationsToAdd != null) {
@@ -405,8 +433,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			}
 		}
 
-		if (fireModelChanged)
+		if (fireModelChanged) {
 			fireModelChanged();
+		}
 	}
 
 	/**
@@ -431,8 +460,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 				getAnnotationModelEvent().annotationAdded(annotation);
 			}
 
-			if (fireModelChanged)
+			if (fireModelChanged) {
 				fireModelChanged();
+			}
 		}
 	}
 
@@ -440,13 +470,13 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	public void addAnnotationModelListener(IAnnotationModelListener listener) {
 		if (!fAnnotationModelListeners.contains(listener)) {
 			fAnnotationModelListeners.add(listener);
-			if (listener instanceof IAnnotationModelListenerExtension) {
-				IAnnotationModelListenerExtension extension= (IAnnotationModelListenerExtension) listener;
+			if (listener instanceof IAnnotationModelListenerExtension extension) {
 				AnnotationModelEvent event= createAnnotationModelEvent();
 				event.markSealed();
 				extension.modelChanged(event);
-			} else
+			} else {
 				listener.modelChanged(this);
+			}
 		}
 	}
 
@@ -459,8 +489,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 * @throws BadLocationException if the position is not a valid document position
 	 */
 	protected void addPosition(IDocument document, Position position) throws BadLocationException {
-		if (document != null)
+		if (document != null) {
 			document.addPosition(position);
+		}
 	}
 
 	/**
@@ -473,8 +504,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 * @since 3.0
 	 */
 	protected void removePosition(IDocument document, Position position) {
-		if (document != null)
+		if (document != null) {
 			document.removePosition(position);
+		}
 	}
 
 	@Override
@@ -484,12 +516,13 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 		if (fDocument == null) {
 			fDocument= document;
 			Iterator<Position> e= getAnnotationMap().valuesIterator();
-			while (e.hasNext())
+			while (e.hasNext()) {
 				try {
 					addPosition(document, e.next());
 				} catch (BadLocationException x) {
 					// ignore invalid position
 				}
+			}
 		}
 
 		++ fOpenConnections;
@@ -554,8 +587,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			}
 		}
 
-		if (modelEvent != null)
+		if (modelEvent != null) {
 			fireModelChanged(modelEvent);
+		}
 	}
 
 	/**
@@ -581,17 +615,19 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 
 		event.markSealed();
 
-		if (event.isEmpty())
+		if (event.isEmpty()) {
 			return;
+		}
 
 		ArrayList<IAnnotationModelListener> v= new ArrayList<>(fAnnotationModelListeners);
 		Iterator<IAnnotationModelListener> e= v.iterator();
 		while (e.hasNext()) {
 			IAnnotationModelListener l= e.next();
-			if (l instanceof IAnnotationModelListenerExtension)
+			if (l instanceof IAnnotationModelListenerExtension) {
 				((IAnnotationModelListenerExtension) l).modelChanged(event);
-			else if (l != null)
+			} else if (l != null) {
 				l.modelChanged(this);
+			}
 		}
 	}
 
@@ -608,11 +644,13 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	protected void removeAnnotations(List<? extends Annotation> annotations, boolean fireModelChanged, boolean modelInitiated) {
 		if (!annotations.isEmpty()) {
 			Iterator<? extends Annotation> e= annotations.iterator();
-			while (e.hasNext())
+			while (e.hasNext()) {
 				removeAnnotation(e.next(), false);
+			}
 
-			if (fireModelChanged)
+			if (fireModelChanged) {
 				fireModelChanged();
+			}
 		}
 	}
 
@@ -642,38 +680,30 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			ArrayList<Annotation> deleted= new ArrayList<>();
 			IAnnotationMap annotations= getAnnotationMap();
 			Object mapLock = annotations.getLockObject();
-			
-			if (mapLock == null) {
-				Iterator<Annotation> e= annotations.keySetIterator();
-				while (e.hasNext()) {
-					Annotation a= e.next();
-					Position p= annotations.get(a);
-					if (p == null || p.isDeleted())
+
+			synchronized (mapLock) {
+				annotations.forEach((a, p) -> {
+					if (p == null || p.isDeleted()) {
 						deleted.add(a);
-				}
-			} else {
-				synchronized (mapLock) {
-					annotations.forEach((a, p) -> {
-						if (p == null || p.isDeleted()) {
-							deleted.add(a);
-						}
-					});
-				}
+					}
+				});
 			}
 
 			if (fireModelChanged && forkNotification) {
 				removeAnnotations(deleted, false, false);
 				synchronized (getLockObject()) {
-					if (fModelEvent != null)
+					if (fModelEvent != null) {
 						new Thread() {
 							@Override
 							public void run() {
 								fireModelChanged();
 							}
 						}.start();
+					}
 				}
-			} else
+			} else {
 				removeAnnotations(deleted, fireModelChanged, false);
+			}
 		}
 	}
 
@@ -691,18 +721,20 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	public Iterator<Annotation> getAnnotationIterator(int offset, int length, boolean canStartBefore, boolean canEndAfter) {
 		Iterator<Annotation> regionIterator= getRegionAnnotationIterator(offset, length, canStartBefore, canEndAfter);
 
-		if (fAttachments.isEmpty())
+		if (fAttachments.isEmpty()) {
 			return regionIterator;
+		}
 
 		List<Iterator<Annotation>> iterators= new ArrayList<>(fAttachments.size() + 1);
 		iterators.add(regionIterator);
 		Iterator<Object> it= fAttachments.keySet().iterator();
 		while (it.hasNext()) {
 			IAnnotationModel attachment= fAttachments.get(it.next());
-			if (attachment instanceof IAnnotationModelExtension2)
+			if (attachment instanceof IAnnotationModelExtension2) {
 				iterators.add(((IAnnotationModelExtension2) attachment).getAnnotationIterator(offset, length, canStartBefore, canEndAfter));
-			else
+			} else {
 				iterators.add(new RegionIterator(attachment.getAnnotationIterator(), attachment, offset, length, canStartBefore, canEndAfter));
+			}
 		}
 
 		return new MetaIterator<>(iterators.iterator());
@@ -720,10 +752,10 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 * @since 3.4
 	 */
 	private Iterator<Annotation> getRegionAnnotationIterator(int offset, int length, boolean canStartBefore, boolean canEndAfter) {
-		if (!(fDocument instanceof AbstractDocument))
+		if (!(fDocument instanceof AbstractDocument document)) {
 			return new RegionIterator(getAnnotationIterator(true), this, offset, length, canStartBefore, canEndAfter);
+		}
 
-		AbstractDocument document= (AbstractDocument) fDocument;
 		cleanup(true);
 
 		try {
@@ -748,14 +780,16 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 */
 	private Iterator<Annotation> getAnnotationIterator(boolean cleanup, boolean recurse) {
 		Iterator<Annotation> iter= getAnnotationIterator(cleanup);
-		if (!recurse || fAttachments.isEmpty())
+		if (!recurse || fAttachments.isEmpty()) {
 			return iter;
+		}
 
 		List<Iterator<Annotation>> iterators= new ArrayList<>(fAttachments.size() + 1);
 		iterators.add(iter);
 		Iterator<Object> it= fAttachments.keySet().iterator();
-		while (it.hasNext())
+		while (it.hasNext()) {
 			iterators.add(fAttachments.get(it.next()).getAnnotationIterator());
+		}
 
 		return new MetaIterator<>(iterators.iterator());
 	}
@@ -769,8 +803,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	 * @return all annotations managed by this model
 	 */
 	protected Iterator<Annotation> getAnnotationIterator(boolean cleanup) {
-		if (cleanup)
+		if (cleanup) {
 			cleanup(true);
+		}
 
 		return getAnnotationMap().keySetIterator();
 	}
@@ -778,12 +813,14 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	@Override
 	public Position getPosition(Annotation annotation) {
 		Position position= getAnnotationMap().get(annotation);
-		if (position != null)
+		if (position != null) {
 			return position;
+		}
 
 		Iterator<IAnnotationModel> it= fAttachments.values().iterator();
-		while (position == null && it.hasNext())
+		while (position == null && it.hasNext()) {
 			position= it.next().getPosition(annotation);
+		}
 		return position;
 	}
 
@@ -816,8 +853,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 		annotations.clear();
 		fPositions.clear();
 
-		if (fireModelChanged)
+		if (fireModelChanged) {
 			fireModelChanged();
+		}
 	}
 
 	@Override
@@ -849,8 +887,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 				getAnnotationModelEvent().annotationRemoved(annotation, p);
 			}
 
-			if (fireModelChanged)
+			if (fireModelChanged) {
 				fireModelChanged();
+			}
 		}
 	}
 
@@ -895,8 +934,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 				synchronized (getLockObject()) {
 					getAnnotationModelEvent().annotationChanged(annotation);
 				}
-				if (fireModelChanged)
+				if (fireModelChanged) {
 					fireModelChanged();
+				}
 
 			} else {
 				try {
@@ -924,8 +964,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 			synchronized (getLockObject()) {
 				getAnnotationModelEvent().annotationChanged(annotation);
 			}
-			if (fireModelChanged)
+			if (fireModelChanged) {
 				fireModelChanged();
+			}
 		}
 	}
 
@@ -943,8 +984,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 		Assert.isNotNull(attachment);
 		if (!fAttachments.containsValue(attachment)) {
 			fAttachments.put(key, attachment);
-			for (int i= 0; i < fOpenConnections; i++)
+			for (int i= 0; i < fOpenConnections; i++) {
 				attachment.connect(fDocument);
+			}
 			attachment.addAnnotationModelListener(fModelListener);
 		}
 	}
@@ -966,8 +1008,9 @@ public class AnnotationModel implements IAnnotationModel, IAnnotationModelExtens
 	public IAnnotationModel removeAnnotationModel(Object key) {
 		IAnnotationModel ret= fAttachments.remove(key);
 		if (ret != null) {
-			for (int i= 0; i < fOpenConnections; i++)
+			for (int i= 0; i < fOpenConnections; i++) {
 				ret.disconnect(fDocument);
+			}
 			ret.removeAnnotationModelListener(fModelListener);
 		}
 		return ret;

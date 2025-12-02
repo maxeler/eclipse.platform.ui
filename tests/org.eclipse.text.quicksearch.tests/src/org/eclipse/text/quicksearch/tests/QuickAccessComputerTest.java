@@ -9,8 +9,7 @@
  *******************************************************************************/
 package org.eclipse.text.quicksearch.tests;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,9 +24,9 @@ import org.eclipse.text.quicksearch.internal.ui.QuickSearchQuickAccessComputer;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.tests.harness.util.DisplayHelper;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class QuickAccessComputerTest {
+class QuickAccessComputerTest {
 
 	private final class QuickSearchDialogExtension extends QuickSearchDialog {
 		private QuickSearchDialogExtension(IWorkbenchWindow window) {
@@ -42,7 +41,7 @@ public class QuickAccessComputerTest {
 	}
 
 	@Test
-	public void testQuickAccessComputer() throws CoreException, IOException {
+	void testQuickAccessComputer() throws CoreException, IOException {
 		IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(getClass().getName() + System.currentTimeMillis());
 		project.create(null);
 		project.open(null);
@@ -55,8 +54,16 @@ public class QuickAccessComputerTest {
 		dialog.setInitialPattern(request);
 		dialog.setBlockOnOpen(false);
 		dialog.open();
-		assertTrue(DisplayHelper.waitForCondition(dialog.getShell().getDisplay(), 2000, () -> dialog.getResult().length > 0));
+		var display = dialog.getShell().getDisplay();
+		assertTrue(DisplayHelper.waitForCondition(display, 2000, () -> dialog.getResult().length > 0));
 		dialog.close();
-		assertEquals(1, new QuickSearchQuickAccessComputer().computeElements(request, new NullProgressMonitor()).length);
+
+		// Wait for the QuickAccessComputer to return results, as the search happens asynchronously.
+		// Retry the search if it initially returns no results, allowing time for the background
+		// search job to find matches. This addresses race conditions on slower CI systems.
+		assertTrue(DisplayHelper.waitForCondition(display, 5000, () -> {
+			QuickSearchQuickAccessComputer computer = new QuickSearchQuickAccessComputer();
+			return computer.computeElements(request, new NullProgressMonitor()).length == 1;
+		}), "Expected QuickAccessComputer to find exactly one result within timeout");
 	}
 }

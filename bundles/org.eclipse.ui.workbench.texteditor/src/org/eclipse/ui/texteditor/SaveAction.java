@@ -27,7 +27,7 @@ import java.util.ResourceBundle;
  * @noextend This class is not intended to be subclassed by clients.
  * @deprecated As of 3.5, replaced by {@link org.eclipse.ui.actions.ActionFactory#SAVE}
  */
-@Deprecated
+@Deprecated(forRemoval = true, since = "2025-12")
 public class SaveAction extends TextEditorAction {
 
 	/**
@@ -41,15 +41,18 @@ public class SaveAction extends TextEditorAction {
 	 * @param editor the text editor
 	 * @see TextEditorAction#TextEditorAction(ResourceBundle, String, ITextEditor)
 	 */
+	@Deprecated
 	public SaveAction(ResourceBundle bundle, String prefix, ITextEditor editor) {
 		super(bundle, prefix, editor);
 	}
 
+	@Deprecated
 	@Override
 	public void run() {
 		getTextEditor().getSite().getPage().saveEditor(getTextEditor(), false);
 	}
 
+	@Deprecated
 	@Override
 	public void update() {
 		setEnabled(getTextEditor().isDirty());

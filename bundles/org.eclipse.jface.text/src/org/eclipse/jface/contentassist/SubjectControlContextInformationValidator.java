@@ -32,7 +32,7 @@ import org.eclipse.jface.text.contentassist.IContextInformation;
 public final class SubjectControlContextInformationValidator implements ISubjectControlContextInformationValidator {
 
 	/** The content assist processor. */
-	private IContentAssistProcessor fProcessor;
+	private final IContentAssistProcessor fProcessor;
 	/** The context information to be validated. */
 	private IContextInformation fContextInformation;
 	/** The content assist subject control. */
@@ -44,29 +44,34 @@ public final class SubjectControlContextInformationValidator implements ISubject
 	 *
 	 * @param processor the processor to be used for validation
 	 */
+	@Deprecated
 	public SubjectControlContextInformationValidator(IContentAssistProcessor processor) {
 		fProcessor= processor;
 	}
 
+	@Deprecated
 	@Override
 	public void install(IContextInformation contextInformation, ITextViewer viewer, int offset) {
 		throw new UnsupportedOperationException();
 	}
 
+	@Deprecated
 	@Override
 	public void install(IContextInformation contextInformation, IContentAssistSubjectControl contentAssistSubjectControl, int offset) {
 		fContextInformation= contextInformation;
 		fContentAssistSubjectControl= contentAssistSubjectControl;
 	}
 
+	@Deprecated
 	@Override
 	public boolean isContextInformationValid(int offset) {
 		if (fContentAssistSubjectControl != null && fProcessor instanceof ISubjectControlContentAssistProcessor) {
 			IContextInformation[] infos= ((ISubjectControlContentAssistProcessor)fProcessor).computeContextInformation(fContentAssistSubjectControl, offset);
 			if (infos != null && infos.length > 0) {
 				for (IContextInformation info : infos) {
-					if (fContextInformation.equals(info))
+					if (fContextInformation.equals(info)) {
 						return true;
+					}
 				}
 			}
 		}

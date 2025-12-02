@@ -35,9 +35,9 @@ import org.eclipse.core.internal.databinding.IdentitySet;
  */
 public class ObservablesManager {
 
-	private Set<IObservable> managedObservables = new IdentitySet<>();
-	private Set<IObservable> excludedObservables = new IdentitySet<>();
-	private Map<DataBindingContext, ManagerEntry> contexts = new HashMap<>();
+	private final Set<IObservable> managedObservables = new IdentitySet<>();
+	private final Set<IObservable> excludedObservables = new IdentitySet<>();
+	private final Map<DataBindingContext, ManagerEntry> contexts = new HashMap<>();
 
 	/**
 	 * Create a new observables manager.
@@ -123,7 +123,7 @@ public class ObservablesManager {
 	 * @param runnable the runnable to execute
 	 * @since 1.2
 	 */
-	@Deprecated(since = "1.11.0")
+	@Deprecated(forRemoval = true, since = "2025-12")
 	public void runAndCollect(Runnable runnable) {
 		IObservable[] collected = ObservableTracker.runAndCollect(runnable);
 		for (IObservable observable : collected) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016 Red Hat Inc. and others.
+ * Copyright (c) 2016, 2025 Red Hat Inc. and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -23,8 +23,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +46,7 @@ import org.eclipse.core.runtime.SafeRunner;
 
 import org.eclipse.jface.contentassist.IContentAssistSubjectControl;
 
+import org.eclipse.jface.text.Activator;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -66,9 +70,9 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 	 */
 	private CompletableFuture<?> fAggregatedPopulateFuture;
 
-	private Collection<CompletableFuture<?>> toCancelFutures= new LinkedList<>();
+	private final Collection<CompletableFuture<?>> toCancelFutures= new LinkedList<>();
 
-	private PopupVisibleTimer fPopupVisibleTimer= new PopupVisibleTimer();
+	private final PopupVisibleTimer fPopupVisibleTimer= new PopupVisibleTimer();
 
 	private static final class ComputingProposal implements ICompletionProposal, ICompletionProposalExtension {
 
@@ -109,10 +113,10 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 
 		@Override
 		public String getAdditionalProposalInfo() {
-			 return NLS.bind(JFaceTextMessages.getString("AsyncCompletionProposalPopup.computingDetails"), new Object[] { //$NON-NLS-1$;
-				Integer.valueOf(fSize),
-				Integer.valueOf(fSize - fRemaining),
-				Integer.valueOf(fRemaining) });
+			 return NLS.bind(JFaceTextMessages.getString("AsyncCompletionProposalPopup.computingDetails"), //$NON-NLS-1$;
+							Integer.valueOf(fSize),
+							Integer.valueOf(fSize - fRemaining),
+							Integer.valueOf(fRemaining));
 		}
 
 		@Override
@@ -155,8 +159,9 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 	 */
 	@Override
 	public String showProposals(boolean autoActivated) {
-		if (fKeyListener == null)
+		if (fKeyListener == null) {
 			fKeyListener= new ProposalSelectionListener();
+		}
 
 		final Control control= fContentAssistSubjectControlAdapter.getControl();
 
@@ -300,11 +305,13 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 		}
 		final Control control= fContentAssistSubjectControlAdapter.getControl();
 
-		if (fKeyListener == null)
+		if (fKeyListener == null) {
 			fKeyListener= new ProposalSelectionListener();
+		}
 
-		if (!isValid(fProposalShell) && !control.isDisposed())
+		if (!isValid(fProposalShell) && !control.isDisposed()) {
 			fContentAssistSubjectControlAdapter.addKeyListener(fKeyListener);
+		}
 
 		fInvocationOffset= fContentAssistSubjectControlAdapter.getSelectedRange().x;
 		fFilterOffset= fInvocationOffset;
@@ -372,7 +379,7 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 		}
 		List<CompletableFuture<List<ICompletionProposal>>> futures = new ArrayList<>(processors.size());
 		for (IContentAssistProcessor processor : processors) {
-			futures.add(CompletableFuture.supplyAsync(() -> {
+			futures.add(submitInterruptible(() -> {
 				AtomicReference<List<ICompletionProposal>> result= new AtomicReference<>();
 				SafeRunner.run(() -> {
 					ICompletionProposal[] proposals= processor.computeCompletionProposals(fViewer, invocationOffset);
@@ -389,9 +396,40 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 					return Collections.emptyList();
 				}
 				return proposals;
-			}));
+			}, Activator.getExecutor()));
 		}
 		return futures;
+	}
+
+	/**
+	 * Submit a task in such a way that it actually reacts to cancellation (i.e. calls to
+	 * {@code future.cancel(true)})
+	 *
+	 * @param executor Do not use the common pool here since that one does not cancel (interrupts)
+	 *            worker threads
+	 * @return an interruptible future.
+	 */
+	private static <T> CompletableFuture<T> submitInterruptible(
+			Callable<T> task, ExecutorService executor) {
+
+		CompletableFuture<T> cf= new CompletableFuture<>();
+
+		Future<?> ft= executor.submit(() -> {
+			try {
+				cf.complete(task.call());
+			} catch (Exception e) {
+				cf.completeExceptionally(e);
+			}
+		});
+
+		// make canceling the CF also cancel the FutureTask
+		cf.whenComplete((r, t) -> {
+			if (cf.isCancelled()) {
+				ft.cancel(true); // this actually interrupts
+			}
+		});
+
+		return cf;
 	}
 
 	private String getTokenContentType(int invocationOffset) throws BadLocationException {
@@ -409,9 +447,9 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 	private class PopupVisibleTimer implements Runnable {
 		private Thread fThread;
 
-		private Object fMutex= new Object();
+		private final Object fMutex= new Object();
 
-		private int fAutoActivationDelay= 500;
+		private final int fAutoActivationDelay= 500;
 
 		protected void start() {
 			fThread= new Thread(this, JFaceTextMessages.getString("ContentAssistant.assist_delay_timer_name")); //$NON-NLS-1$
@@ -423,8 +461,9 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 			try {
 				while (true) {
 					synchronized (fMutex) {
-						if (fAutoActivationDelay != 0)
+						if (fAutoActivationDelay != 0) {
 							fMutex.wait(fAutoActivationDelay);
+						}
 					}
 					Optional<Display> display= Optional.ofNullable(fContentAssistSubjectControlAdapter.getControl()).map(Control::getDisplay);
 					display.ifPresent(d -> d.asyncExec(() -> displayProposals(true)));
@@ -437,8 +476,9 @@ class AsyncCompletionProposalPopup extends CompletionProposalPopup {
 
 		protected void stop() {
 			Thread threadToStop= fThread;
-			if (threadToStop != null && threadToStop.isAlive())
+			if (threadToStop != null && threadToStop.isAlive()) {
 				threadToStop.interrupt();
+			}
 		}
 
 	}

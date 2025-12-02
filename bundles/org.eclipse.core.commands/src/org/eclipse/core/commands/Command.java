@@ -42,8 +42,8 @@ import org.eclipse.core.runtime.SafeRunner;
  * defined if it is declared in the XML of a resolved plug-in. If the plug-in is
  * unloaded or the command is simply not declared, then it is undefined. Trying
  * to reference an undefined command will succeed, but trying to access any of
- * its functionality will fail with a <code>NotDefinedException</code>. If
- * you need to know when a command changes from defined to undefined (or vice
+ * its functionality will fail with a <code>NotDefinedException</code>. If you
+ * need to know when a command changes from defined to undefined (or vice
  * versa), then attach a command listener.
  * </p>
  * <p>
@@ -550,8 +550,7 @@ public final class Command extends NamedHandleObjectWithState implements Compara
 
 		if (executionListeners != null) {
 			for (final IExecutionListener object : executionListeners) {
-				if (object instanceof IExecutionListenerWithChecks) {
-					final IExecutionListenerWithChecks listener = (IExecutionListenerWithChecks) object;
+				if (object instanceof final IExecutionListenerWithChecks listener) {
 					listener.notDefined(getId(), e);
 				}
 			}
@@ -576,8 +575,7 @@ public final class Command extends NamedHandleObjectWithState implements Compara
 
 		if (executionListeners != null) {
 			for (final IExecutionListener object : executionListeners) {
-				if (object instanceof IExecutionListenerWithChecks) {
-					final IExecutionListenerWithChecks listener = (IExecutionListenerWithChecks) object;
+				if (object instanceof final IExecutionListenerWithChecks listener) {
 					listener.notEnabled(getId(), e);
 				}
 			}
@@ -788,8 +786,7 @@ public final class Command extends NamedHandleObjectWithState implements Compara
 	 */
 	public ParameterType getParameterType(final String parameterId) throws NotDefinedException {
 		final IParameter parameter = getParameter(parameterId);
-		if (parameter instanceof ITypedParameter) {
-			final ITypedParameter parameterWithType = (ITypedParameter) parameter;
+		if (parameter instanceof final ITypedParameter parameterWithType) {
 			return parameterWithType.getParameterType();
 		}
 		return null;
@@ -1077,8 +1074,7 @@ public final class Command extends NamedHandleObjectWithState implements Compara
 
 		final String[] stateIds = getStateIds();
 		if (stateIds != null) {
-			if (handler instanceof IObjectWithState) {
-				final IObjectWithState handlerWithState = (IObjectWithState) handler;
+			if (handler instanceof final IObjectWithState handlerWithState) {
 				for (final String stateId : stateIds) {
 					handlerWithState.removeState(stateId);
 
