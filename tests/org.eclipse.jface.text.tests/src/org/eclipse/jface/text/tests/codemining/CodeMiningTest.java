@@ -22,13 +22,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestWatcher;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.extension.TestWatcher;
 
 import org.eclipse.test.Screenshots;
 
@@ -40,6 +41,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.internal.DPIUtil;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -75,11 +77,17 @@ public class CodeMiningTest {
 
 	private SourceViewer fViewer;
 	private Shell fShell;
+	private MonoReconciler fReconciler;
 
-	@Rule
-	public TestWatcher screenshotRule= Screenshots.onFailure(() -> fShell);
+	@RegisterExtension
+	public TestWatcher screenshotRule = new TestWatcher() {
+		@Override
+		public void testFailed(ExtensionContext context, Throwable cause) {
+			Screenshots.takeScreenshot(CodeMiningTest.class, context.getDisplayName());
+		}
+	};
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		fShell= new Shell(Display.getDefault());
 		fShell.setSize(500, 200);
@@ -88,10 +96,12 @@ public class CodeMiningTest {
 		final StyledText textWidget= fViewer.getTextWidget();
 		textWidget.setText("a");
 		textWidget.setText("");
-		MonoReconciler reconciler = new MonoReconciler(new IReconcilingStrategy() {
+		fReconciler = new MonoReconciler(new IReconcilingStrategy() {
 			@Override
 			public void setDocument(IDocument document) {
-				fViewer.updateCodeMinings();
+				if (fViewer != null) {
+					fViewer.updateCodeMinings();
+				}
 			}
 
 			@Override
@@ -101,10 +111,12 @@ public class CodeMiningTest {
 
 			@Override
 			public void reconcile(IRegion partition) {
-				fViewer.updateCodeMinings();
+				if (fViewer != null) {
+					fViewer.updateCodeMinings();
+				}
 			}
 		}, false);
-		reconciler.install(fViewer);
+		fReconciler.install(fViewer);
 		fViewer.setDocument(new Document(), new AnnotationModel());
 		fViewer.setCodeMiningProviders(new ICodeMiningProvider[] { new DelayedEchoCodeMiningProvider() });
 		AnnotationPainter annotationPainter = new AnnotationPainter(fViewer, null);
@@ -114,7 +126,7 @@ public class CodeMiningTest {
 		fViewer.setCodeMiningProviders(new ICodeMiningProvider[] { new DelayedEchoCodeMiningProvider() });
 		final Display display = textWidget.getDisplay();
 		fShell.open();
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().isVisible();
@@ -123,15 +135,19 @@ public class CodeMiningTest {
 		DisplayHelper.sleep(textWidget.getDisplay(), 1000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() {
+		if (fReconciler != null) {
+			fReconciler.uninstall();
+			fReconciler = null;
+		}
 		fViewer = null;
 	}
 
 	@Test
 	public void testCodeMiningFirstLine() {
 		fViewer.getDocument().set("echo");
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getLineVerticalIndent(0) > 0;
@@ -153,7 +169,7 @@ public class CodeMiningTest {
 				},
 				new DelayedEchoCodeMiningProvider() });
 		fViewer.getDocument().set("echo");
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getLineVerticalIndent(0) > 0;
@@ -163,10 +179,10 @@ public class CodeMiningTest {
 
 	@Test
 	public void testCodeMiningCtrlHome() throws BadLocationException {
-		Assume.assumeFalse("See bug 541415. For whatever reason, this shortcut doesn't work on Mac", Util.isMac());
+		Assumptions.assumeFalse(Util.isMac(), "See bug 541415. For whatever reason, this shortcut doesn't work on Mac");
 		DelayedEchoCodeMiningProvider.DELAY = 500;
 		fViewer.getDocument().set(TextViewerTest.generate5000Lines());
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getText().length() > 5000;
@@ -175,7 +191,7 @@ public class CodeMiningTest {
 		TextViewerTest.ctrlEnd(fViewer);
 		final int lastLine = fViewer.getDocument().getNumberOfLines() - 1;
 		final int lastLineOffset = fViewer.getDocument().getLineOffset(lastLine);
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return lastLineOffset >= fViewer.getVisibleRegion().getOffset() && lastLineOffset <= fViewer.getVisibleRegion().getOffset() + fViewer.getVisibleRegion().getLength();
@@ -186,15 +202,15 @@ public class CodeMiningTest {
 		fViewer.addViewportListener(offset ->
 			events.incrementAndGet());
 		TextViewerTest.ctrlHome(fViewer);
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return events.get() > 0;
 			}
 		}.waitForCondition(fViewer.getControl().getDisplay(), 3000));
-		Assert.assertEquals(0, fViewer.getVisibleRegion().getOffset());
+		Assertions.assertEquals(0, fViewer.getVisibleRegion().getOffset());
 		// wait for codemining to style line
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getLineVerticalIndent(0) > 0;
@@ -204,9 +220,9 @@ public class CodeMiningTest {
 
 	@Test
 	public void testCodeMiningCtrlEnd() throws BadLocationException {
-		Assume.assumeFalse("See bug 541415. For whatever reason, this shortcut doesn't work on Mac", Util.isMac());
+		Assumptions.assumeFalse(Util.isMac(), "See bug 541415. For whatever reason, this shortcut doesn't work on Mac");
 		fViewer.getDocument().set(TextViewerTest.generate5000Lines());
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getText().length() > 5000 && fViewer.getTextWidget().getLineVerticalIndent(0) > 0;
@@ -216,13 +232,13 @@ public class CodeMiningTest {
 		TextViewerTest.ctrlEnd(fViewer);
 		final int lastLine = fViewer.getDocument().getNumberOfLines() - 1;
 		final int lastLineOffset = fViewer.getDocument().getLineOffset(lastLine);
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return lastLineOffset >= fViewer.getVisibleRegion().getOffset() && lastLineOffset <= fViewer.getVisibleRegion().getOffset() + fViewer.getVisibleRegion().getLength();
 			}
 		}.waitForCondition(fViewer.getControl().getDisplay(), 3000));
-		Assert.assertTrue(new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return fViewer.getTextWidget().getLineVerticalIndent(lastLine) > 0;
@@ -244,7 +260,7 @@ public class CodeMiningTest {
 			}
 		} });
 		StyledText widget= fViewer.getTextWidget();
-		Assert.assertTrue("Code mining is not visible in 1st empty line after line break character", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -255,7 +271,7 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000), "Code mining is not visible in 1st empty line after line break character");
 	}
 
 	@Test
@@ -283,7 +299,7 @@ public class CodeMiningTest {
 			public void dispose() {
 			}
 		} });
-		Assert.assertTrue("Code mining is not visible at end of document", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -293,9 +309,8 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000), "Code mining is not visible at end of document");
 	}
-
 	@Test
 	public void testDocumentFooterCodeMining() throws Exception {
 		String source= "first\nsecond";
@@ -317,7 +332,7 @@ public class CodeMiningTest {
 			public void dispose() {
 			}
 		} });
-		Assert.assertTrue("Code mining is not visible at end of document", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -331,7 +346,7 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000), "Code mining is not visible at end of document");
 	}
 
 	@Test
@@ -355,7 +370,7 @@ public class CodeMiningTest {
 			public void dispose() {
 			}
 		} });
-		Assert.assertTrue("Code mining is not visible at end of document", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -369,7 +384,7 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000), "Code mining is not visible at end of document");
 	}
 
 	@Test
@@ -386,7 +401,7 @@ public class CodeMiningTest {
 			public void dispose() {
 			}
 		} });
-		Assert.assertTrue("Code mining is not visible at end of document", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -396,7 +411,7 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 10_000), "Code mining is not visible at end of document");
 	}
 
 	@Test
@@ -413,7 +428,7 @@ public class CodeMiningTest {
 			}
 		} });
 		StyledText widget= fViewer.getTextWidget();
-		Assert.assertTrue("Code mining is not visible in 1st line after character a before line break character", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -424,7 +439,7 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000), "Code mining is not visible in 1st line after character a before line break character");
 	}
 
 	@Test
@@ -441,7 +456,7 @@ public class CodeMiningTest {
 			}
 		} });
 		StyledText widget = fViewer.getTextWidget();
-		Assert.assertFalse("Code mining is visible on 2nd line", new DisplayHelper() {
+		Assertions.assertFalse(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -452,7 +467,7 @@ public class CodeMiningTest {
 					return true;
 				}
 			}
-		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000));
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000), "Code mining is visible on 2nd line");
 	}
 
 	@Test
@@ -483,7 +498,7 @@ public class CodeMiningTest {
 			}
 		} });
 		StyledText widget= fViewer.getTextWidget();
-		Assert.assertFalse("Code mining is unexpectedly rendered below last line", new DisplayHelper() {
+		Assertions.assertFalse(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				try {
@@ -493,7 +508,54 @@ public class CodeMiningTest {
 					return false;
 				}
 			}
-		}.waitForCondition(widget.getDisplay(), 1000));
+		}.waitForCondition(widget.getDisplay(), 1000), "Code mining is unexpectedly rendered below last line");
+	}
+
+	@Test
+	public void testCodeMiningOnZeroWitdhCharacterAfterPosition() {
+		codeMiningOnZeroWidthCharacter(true);
+	}
+
+	@Test
+	public void testCodeMiningOnZeroWidthCharacterBeforePosition() {
+		codeMiningOnZeroWidthCharacter(false);
+	}
+
+	private void codeMiningOnZeroWidthCharacter(boolean afterPosition) {
+		char ZW_SPACE= '\u200b';
+		String text= "a" + ZW_SPACE + "b";
+		fViewer.getDocument().set(text);
+		fViewer.setCodeMiningProviders(new ICodeMiningProvider[] {
+				new AbstractCodeMiningProvider() {
+					@Override
+					public CompletableFuture<List<? extends ICodeMining>> provideCodeMinings(ITextViewer viewer, IProgressMonitor monitor) {
+						List<ICodeMining> result= new ArrayList<>();
+						result.add(new LineContentCodeMining(new Position(1, 1), afterPosition, this) {
+							@Override
+							public String getLabel() {
+								return "ZWSP";
+							}
+						});
+						return CompletableFuture.completedFuture(result);
+					}
+				}
+		});
+		fViewer.updateCodeMinings();
+		Assertions.assertTrue(new DisplayHelper() {
+			@Override
+			protected boolean condition() {
+				var tw= fViewer.getTextWidget();
+				int off= afterPosition ? 1 : 0;
+				StyleRange styleRange= tw.getStyleRangeAtOffset(off);
+				if (styleRange != null && styleRange.metrics != null) {
+					// code mining applied a style range with metrics at offset 1
+					return true;
+				} else {
+					tw.redraw();
+				}
+				return false;
+			}
+		}.waitForCondition(fViewer.getTextWidget().getDisplay(), 1000), "Line content code mining not rendered at zero width character");
 	}
 
 	@Test
@@ -508,35 +570,35 @@ public class CodeMiningTest {
 		fViewer.setCodeMiningProviders(new ICodeMiningProvider[] { new RefTestCodeMiningProvider(useInLineCodeMinings) });
 
 		StyledText widget= fViewer.getTextWidget();
-		Assert.assertTrue("Line header code minigs were used. Expected in-line code minings instead.", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return widget.getStyleRangeAtOffset(index) != null
 						&& widget.isVisible() && widget.getLineVerticalIndent(0) == 0;
 			}
-		}.waitForCondition(widget.getDisplay(), 1000));
+		}.waitForCondition(widget.getDisplay(), 1000), "Line header code minigs were used. Expected in-line code minings instead.");
 
 		// switch to line header mode
 		useInLineCodeMinings.set(false);
 		fViewer.updateCodeMinings();
 
-		Assert.assertTrue("In-line code minigs were used (or no code minings at all). Expected line header code minings.", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return widget.getStyleRangeAtOffset(index) == null && widget.getLineVerticalIndent(0) > 0;
 			}
-		}.waitForCondition(widget.getDisplay(), 1000));
+		}.waitForCondition(widget.getDisplay(), 1000), "In-line code minigs were used (or no code minings at all). Expected line header code minings.");
 
 		// switch back to in-line mode
 		useInLineCodeMinings.set(true);
 		fViewer.updateCodeMinings();
 
-		Assert.assertTrue("Line header code minigs were used. Expected in-line code minings instead.", new DisplayHelper() {
+		Assertions.assertTrue(new DisplayHelper() {
 			@Override
 			protected boolean condition() {
 				return widget.getStyleRangeAtOffset(index) != null && widget.getLineVerticalIndent(0) == 0;
 			}
-		}.waitForCondition(widget.getDisplay(), 1000));
+		}.waitForCondition(widget.getDisplay(), 1000), "Line header code minigs were used. Expected in-line code minings instead.");
 	}
 
 	private static boolean hasCodeMiningPrintedBelowLine(ITextViewer viewer, int line) throws BadLocationException {
@@ -564,14 +626,17 @@ public class CodeMiningTest {
 			starty= lineBounds.y;
 		}
 
-		Image image= new Image(widget.getDisplay(), (gc, width, height) -> {}, widget.getSize().x, widget.getSize().y);
+		Image image= new Image(widget.getDisplay(), (gc, width, height) -> {
+		}, (widget.getSize().x), (widget.getSize().y));
 		try {
 			GC gc= new GC(widget);
 			gc.copyArea(image, 0, 0);
 			gc.dispose();
-			ImageData imageData= image.getImageData();
-			for (int x= startx + 1; x < image.getBounds().width && x < imageData.width; x++) {
-				for (int y= starty; y < imageData.height - 10 /*do not include the border*/; y++) {
+			int zoom= DPIUtil.getDeviceZoom();
+			ImageData imageData= image.getImageData(zoom);
+			double zoomFactor= zoom / 100.0;
+			for (int x= (int) (zoomFactor * startx + 1); x < image.getBounds().width && x < imageData.width; x++) {
+				for (int y= (int) (zoomFactor * starty); y < imageData.height - 10 /*do not include the border*/; y++) {
 					if (!imageData.palette.getRGB(imageData.getPixel(x, y)).equals(widget.getBackground().getRGB())) {
 						// code mining printed
 						return true;
@@ -604,14 +669,20 @@ public class CodeMiningTest {
 		} else {
 			secondLineBounds= widget.getTextBounds(lineOffset, lineOffset + lineLength);
 		}
-		Image image = new Image(widget.getDisplay(), (gc, width, height) -> {}, widget.getSize().x, widget.getSize().y);
+
+		Image image= new Image(widget.getDisplay(), (gc, width, height) -> {
+		}, (widget.getSize().x), (widget.getSize().y));
 		GC gc = new GC(widget);
 		gc.copyArea(image, 0, 0);
 		gc.dispose();
-		ImageData imageData = image.getImageData();
+		int zoom= DPIUtil.getDeviceZoom();
+		ImageData imageData= image.getImageData(zoom);
+
 		secondLineBounds.x += secondLineBounds.width; // look only area after text
-		for (int x = secondLineBounds.x + 1; x < image.getBounds().width && x < imageData.width; x++) {
-			for (int y = secondLineBounds.y; y < secondLineBounds.y + secondLineBounds.height && y < imageData.height; y++) {
+
+		double zoomFactor= zoom / 100.0;
+		for (int x= (int) (zoomFactor * (secondLineBounds.x + 1)); x < image.getBounds().width && x < imageData.width; x++) {
+			for (int y= (int) (zoomFactor * (secondLineBounds.y)); y < zoomFactor * (secondLineBounds.y + secondLineBounds.height) && y < imageData.height; y++) {
 				if (!imageData.palette.getRGB(imageData.getPixel(x, y)).equals(widget.getBackground().getRGB())) {
 					// code mining printed
 					image.dispose();

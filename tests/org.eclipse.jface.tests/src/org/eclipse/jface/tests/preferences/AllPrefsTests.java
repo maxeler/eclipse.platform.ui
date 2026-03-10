@@ -13,8 +13,6 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.preferences;
 
-import org.junit.runner.JUnitCore;
-
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -27,7 +25,4 @@ import org.junit.platform.suite.api.Suite;
 })
 public class AllPrefsTests {
 
-	public static void main(String[] args) {
-		JUnitCore.main(AllPrefsTests.class.getName());
-	}
 }

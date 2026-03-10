@@ -13,8 +13,6 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.action;
 
-import org.junit.runner.JUnitCore;
-
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 
@@ -22,9 +20,5 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasses({ ContributionItemTest.class, ToolBarManagerTest.class, CoolBarManagerTest.class,
 		MenuManagerTest.class })
 public class AllActionTests {
-
-	public static void main(String[] args) {
-		JUnitCore.main(AllActionTests.class.getName());
-	}
 
 }

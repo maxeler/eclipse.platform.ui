@@ -161,7 +161,7 @@ public class StackRenderer extends LazyStackRenderer {
 	private static final String TAB_FONT_KEY = "org.eclipse.ui.workbench.TAB_TEXT_FONT"; //$NON-NLS-1$
 
 	@Inject
-	@Preference(nodePath = "org.eclipse.e4.ui.workbench.renderers.swt")
+	@Preference(nodePath = CTabRendering.PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT)
 	private IEclipsePreferences preferences;
 
 	@Inject
@@ -397,6 +397,65 @@ public class StackRenderer extends LazyStackRenderer {
 
 	@Inject
 	@Optional
+	void subscribeTopicChildrenMoved(@UIEventTopic(UIEvents.ElementContainer.TOPIC_CHILDREN) Event event) {
+		if (!UIEvents.isMOVE(event)) {
+			return;
+		}
+		// Ensure that this event is for a MPartStack
+		Object element = event.getProperty(UIEvents.EventTags.ELEMENT);
+		if (!(element instanceof MPartStack stack)) {
+			return;
+		}
+
+		if (stack.getRenderer() != this) {
+			return;
+		}
+
+		MUIElement movedElement = (MUIElement) event.getProperty(UIEvents.EventTags.NEW_VALUE);
+
+		CTabFolder tabFolder = (CTabFolder) stack.getWidget();
+		if (tabFolder == null || tabFolder.isDisposed()) {
+			return;
+		}
+
+		CTabItem item = findItemForPart(movedElement, stack);
+		if (item == null || item.isDisposed()) {
+			return;
+		}
+
+		int newIndex = calcIndexFor(stack, movedElement);
+
+		// Remember the control, it will be disposed with the CTabItem otherwise
+		Control control = item.getControl();
+		item.setControl(null);
+
+		// As CTabItem cannot be reordered, we need to dispose and recreate it
+		String text = item.getText();
+		Image image = item.getImage();
+		boolean showClose = item.getShowClose();
+		String toolTipText = item.getToolTipText();
+		Font font = item.getFont();
+		Object data = item.getData();
+
+		boolean wasSelected = tabFolder.getSelection() == item;
+
+		item.dispose();
+
+		CTabItem newItem = new CTabItem(tabFolder, (showClose ? SWT.CLOSE : SWT.NONE), newIndex);
+		newItem.setText(text);
+		newItem.setImage(image);
+		newItem.setToolTipText(toolTipText);
+		newItem.setFont(font);
+		newItem.setData(data);
+		newItem.setData(OWNING_ME, movedElement);
+		newItem.setControl(control);
+		if (wasSelected) {
+			tabFolder.setSelection(newItem);
+		}
+	}
+
+	@Inject
+	@Optional
 	void subscribeTopicUILabelChanged(@UIEventTopic(UIEvents.UILabel.TOPIC_ALL) Event event) {
 		Object element = event.getProperty(UIEvents.EventTags.ELEMENT);
 		if (!(element instanceof MPart part)) {
@@ -621,6 +680,14 @@ public class StackRenderer extends LazyStackRenderer {
 			tabStateHandler = new TabStateHandler();
 		}
 		tabStateHandler.handleEvent(event);
+	}
+
+	@Override
+	public void removeGui(MUIElement element, Object widget) {
+		if (widget instanceof CTabFolder tabFolder && !tabFolder.isDisposed()) {
+			tabFolder.dispose();
+		}
+		element.setWidget(null);
 	}
 
 	@Override
@@ -1010,7 +1077,7 @@ public class StackRenderer extends LazyStackRenderer {
 		}
 	}
 
-	private int calcIndexFor(MElementContainer<MUIElement> stack, final MUIElement part) {
+	private int calcIndexFor(MElementContainer<? extends MUIElement> stack, final MUIElement part) {
 		int index = 0;
 
 		// Find the -visible- part before this element
@@ -1036,7 +1103,7 @@ public class StackRenderer extends LazyStackRenderer {
 		createTab(parentElement, element);
 	}
 
-	private CTabItem findItemForPart(MUIElement element, MElementContainer<MUIElement> stack) {
+	private CTabItem findItemForPart(MUIElement element, MElementContainer<? extends MUIElement> stack) {
 		if (stack == null) {
 			stack = element.getParent();
 		}

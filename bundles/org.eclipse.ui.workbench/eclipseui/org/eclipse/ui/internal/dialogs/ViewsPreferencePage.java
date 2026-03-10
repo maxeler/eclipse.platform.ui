@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corporation and others.
+ * Copyright (c) 2000, 2026 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -53,6 +53,7 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
+import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -65,7 +66,9 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.internal.DPIUtil;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -91,8 +94,6 @@ import org.osgi.service.prefs.BackingStoreException;
  * applies to the overall appearance, hence the name.
  */
 public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
-
-	private static final String PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT = "org.eclipse.e4.ui.workbench.renderers.swt"; //$NON-NLS-1$
 
 	private static final String E4_THEME_EXTENSION_POINT = "org.eclipse.e4.ui.css.swt.theme"; //$NON-NLS-1$
 
@@ -212,6 +213,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		return engine != null && !highContrastMode;
 	}
 
+	@SuppressWarnings("restriction")
 	private void createRescaleAtRuntimeCheckButton(Composite parent) {
 		if (!OS.isWindows()) {
 			return;
@@ -222,7 +224,15 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 				.getBoolean(IWorkbenchPreferenceConstants.RESCALING_AT_RUNTIME, true);
 		rescaleAtRuntime = createCheckButton(parent, WorkbenchMessages.RescaleAtRuntimeEnabled,
 				initialStateRescaleAtRuntime);
-		rescaleAtRuntime.setToolTipText(WorkbenchMessages.RescaleAtRuntimeDescription);
+		if (!DPIUtil.isSetupCompatibleToMonitorSpecificScaling()) {
+			rescaleAtRuntime.setEnabled(false);
+			Font font = parent.getFont();
+			Composite note = createNoteComposite(font, parent, WorkbenchMessages.Preference_note,
+					WorkbenchMessages.RescaleAtRuntimeDisabledDescription);
+			note.setLayoutData(GridDataFactory.swtDefaults().span(2, 1).create());
+		} else {
+			rescaleAtRuntime.setToolTipText(WorkbenchMessages.RescaleAtRuntimeDescription);
+		}
 	}
 
 	private void createThemeIndependentComposits(Composite comp) {
@@ -248,7 +258,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	}
 
 	private boolean getSwtRendererPreference(String prefName, boolean defaultValue) {
-		return Platform.getPreferencesService().getBoolean(PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT,
+		return Platform.getPreferencesService().getBoolean(CTabRendering.PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT,
 				prefName, defaultValue, null);
 	}
 
@@ -332,7 +342,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	@Override
 	public boolean performOk() {
 		IEclipsePreferences prefs = InstanceScope.INSTANCE
-				.getNode(PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT);
+				.getNode(CTabRendering.PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT);
 		if (isThemingPossible()) {
 			ITheme theme = getSelectedTheme();
 			if (theme != null) {
@@ -441,7 +451,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	@Override
 	protected void performDefaults() {
 		IEclipsePreferences defaultPrefs = DefaultScope.INSTANCE
-				.getNode(PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT);
+				.getNode(CTabRendering.PREF_QUALIFIER_ECLIPSE_E4_UI_WORKBENCH_RENDERERS_SWT);
 		if (isThemingPossible()) {
 			setColorsAndFontsTheme(currentColorsAndFontsTheme);
 

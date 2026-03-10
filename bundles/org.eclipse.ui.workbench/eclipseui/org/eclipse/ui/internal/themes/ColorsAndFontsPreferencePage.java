@@ -63,6 +63,7 @@ import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.graphics.FontMetrics;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.ImageGcDrawer;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
@@ -333,10 +334,6 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 
 		private final HashMap<Color, Image> images = new HashMap<>();
 
-		private int imageSize = -1;
-
-		private int usableImageSize = -1;
-
 		private static final int REFRESH_INTERVAL_IN_MS = 300;
 
 		private final Runnable updateControlsAndRefreshTreeRunnable = () -> {
@@ -440,25 +437,20 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 					c = display.getSystemColor(SWT.COLOR_WHITE);
 					foregroundColor = display.getSystemColor(DEFINITION_NOT_AVAIL_COLOR);
 				}
+				final Color gcBackgroundcolor = c;
+				final Color gcForegroundColor = foregroundColor;
 				Image image = images.get(c);
 				if (image == null) {
-					ensureImageSize();
-					image = new Image(display, imageSize, imageSize);
+					ImageGcDrawer imageGcDrawer = (gc, imageWidth, imageHeight) -> {
+						gc.setForeground(tree.getViewer().getControl().getBackground());
+						gc.drawRectangle(0, 0, imageWidth - 1, imageHeight - 1);
 
-					GC gc = new GC(image);
-					gc.setBackground(tree.getViewer().getControl().getBackground());
-					gc.setForeground(tree.getViewer().getControl().getBackground());
-					gc.drawRectangle(0, 0, imageSize - 1, imageSize - 1);
-
-					gc.setForeground(foregroundColor);
-					gc.setBackground(c);
-
-					int offset = (imageSize - usableImageSize) / 2;
-					gc.drawRectangle(offset, offset, usableImageSize - offset, usableImageSize - offset);
-					gc.fillRectangle(offset + 1, offset + 1, usableImageSize - offset - 1,
-							usableImageSize - offset - 1);
-					gc.dispose();
-
+						gc.setForeground(gcForegroundColor);
+						gc.setBackground(gcBackgroundcolor);
+						gc.fillRectangle(2, 2, 11, 11);
+						gc.drawRectangle(2, 2, 11, 11);
+					};
+					image = new Image(display, imageGcDrawer, 16, 16);
 					images.put(c, image);
 				}
 				return image;
@@ -467,13 +459,6 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 				return workbench.getSharedImages().getImage(IWorkbenchGraphicConstants.IMG_OBJ_FONT);
 			} else {
 				return workbench.getSharedImages().getImage(IWorkbenchGraphicConstants.IMG_OBJ_THEME_CATEGORY);
-			}
-		}
-
-		private void ensureImageSize() {
-			if (imageSize == -1) {
-				imageSize = tree.getViewer().getTree().getItemHeight();
-				usableImageSize = Math.max(1, imageSize - 4);
 			}
 		}
 
@@ -1352,12 +1337,16 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 			return valueFromExtension;
 		}
 		String storeDefault = store.getDefaultString(id);
-		if (storeDefault == null) {
+		if (storeDefault == null || storeDefault.isBlank()) {
 			return valueFromExtension;
 		}
 		try {
 			RGB defaultRGB = ColorUtil.getColorValue(storeDefault);
 			if (defaultRGB != null && !defaultRGB.equals(valueFromExtension)) {
+				if (getActiveTheme() != null
+						&& LightColorFactory.isColorDefinitionIdPartOfLightColorFactory(id)) {
+					return valueFromExtension;
+				}
 				return defaultRGB;
 			}
 		} catch (DataFormatException e) { // silently ignored
@@ -1970,6 +1959,17 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 		}
 	}
 
+	private ThemeElementCategory getCategory() {
+		IStructuredSelection item = (IStructuredSelection) tree.getViewer().getSelection();
+		if (item != null && !item.isEmpty()) {
+			Object object = item.getFirstElement();
+			if (object instanceof ThemeElementCategory) {
+				return (ThemeElementCategory) object;
+			}
+		}
+		return null;
+	}
+
 	protected void updateControls() {
 		FontDefinition fontDefinition = getSelectedFontDefinition();
 		if (fontDefinition != null) {
@@ -1993,6 +1993,18 @@ public final class ColorsAndFontsPreferencePage extends PreferencePage implement
 			editDefaultButton.setEnabled(hasEditableDefault && isSetToDefault);
 			goToDefaultButton.setEnabled(hasEditableDefault);
 			setCurrentColor(colorDefinition);
+			return;
+		}
+		ThemeElementCategory category = getCategory();
+		if (category != null) {
+			fontChangeButton.setEnabled(false);
+			fontSystemButton.setEnabled(false);
+			fontResetButton.setEnabled(false);
+			editDefaultButton.setEnabled(false);
+			goToDefaultButton.setEnabled(false);
+
+			String desc = category.getDescription() != null ? category.getDescription() : ""; //$NON-NLS-1$
+			descriptionText.setText(desc);
 			return;
 		}
 		// not a font or a color?

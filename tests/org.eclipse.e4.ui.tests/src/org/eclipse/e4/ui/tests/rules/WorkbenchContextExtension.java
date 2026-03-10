@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2020 Rolf Theunissen and others.
+ * Copyright (c) 2019, 2026 Rolf Theunissen and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -30,11 +30,11 @@ import org.eclipse.e4.ui.workbench.IWorkbench;
 import org.eclipse.e4.ui.workbench.modeling.EModelService;
 import org.eclipse.e4.ui.workbench.swt.DisplayUISynchronize;
 import org.eclipse.swt.widgets.Display;
-import org.junit.rules.MethodRule;
-import org.junit.runners.model.FrameworkMethod;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
-public class WorkbenchContextRule implements MethodRule {
+public class WorkbenchContextExtension implements BeforeEachCallback, AfterEachCallback {
 
 	private IEclipseContext context;
 	private E4Workbench wb;
@@ -52,19 +52,18 @@ public class WorkbenchContextRule implements MethodRule {
 	}
 
 	@Override
-	public Statement apply(final Statement base, final FrameworkMethod method, final Object target) {
-		return new Statement() {
-			@Override
-			public void evaluate() throws Throwable {
-				createContext();
-				ContextInjectionFactory.inject(target, context);
-				try {
-					base.evaluate();
-				} finally {
-					dispose();
-				}
-			}
-		};
+	public void beforeEach(ExtensionContext extensionContext) throws Exception {
+		try {
+			createContext();
+		} catch (Throwable e) {
+			throw new Exception(e);
+		}
+		ContextInjectionFactory.inject(extensionContext.getRequiredTestInstance(), context);
+	}
+
+	@Override
+	public void afterEach(ExtensionContext extensionContext) throws Exception {
+		dispose();
 	}
 
 	protected void createContext() throws Throwable {

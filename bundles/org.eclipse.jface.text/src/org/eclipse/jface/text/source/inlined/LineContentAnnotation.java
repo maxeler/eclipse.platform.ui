@@ -44,6 +44,8 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 
 	private int redrawnCharacterWidth;
 
+	private boolean isZeroWidthCharacter;
+
 	/**
 	 * Line content annotation constructor.
 	 *
@@ -113,13 +115,16 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 		return redrawnCharacterWidth;
 	}
 
-	void setRedrawnCharacterWidth(int redrawnCharacterWidth) {
+	void setRedrawnCharacterWidth(int redrawnCharacterWidth, boolean isZeroWidthCharacter) {
 		this.redrawnCharacterWidth= redrawnCharacterWidth;
+		this.isZeroWidthCharacter= isZeroWidthCharacter;
 	}
 
 	@Override
 	boolean contains(int x, int y) {
-		return (x >= this.fX && x <= this.fX + width && y >= this.fY && y <= this.fY + getTextWidget().getLineHeight());
+		StyledText textWidget= getTextWidget();
+		int lineHeight= textWidget != null ? textWidget.getLineHeight() : 0;
+		return (x >= this.fX && x <= this.fX + width && y >= this.fY && y <= this.fY + lineHeight);
 	}
 
 	/**
@@ -137,6 +142,9 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 	 *         not model position.
 	 */
 	StyleRange updateStyle(StyleRange style, FontMetrics fontMetrics, ITextViewer viewer, boolean afterPosition) {
+		if (viewer == null) {
+			return null;
+		}
 		Position widgetPosition= computeWidgetPosition(viewer);
 		if (widgetPosition == null) {
 			return null;
@@ -146,7 +154,7 @@ public class LineContentAnnotation extends AbstractInlinedAnnotation {
 		if (!afterPosition) {
 			usePreviousChar= drawRightToPreviousChar(widgetPosition.getOffset(), textWidget);
 		}
-		if (width == 0 || getRedrawnCharacterWidth() == 0) {
+		if (isZeroWidthCharacter == false && (width == 0 || getRedrawnCharacterWidth() == 0)) {
 			return null;
 		}
 		int fullWidth= width + getRedrawnCharacterWidth();

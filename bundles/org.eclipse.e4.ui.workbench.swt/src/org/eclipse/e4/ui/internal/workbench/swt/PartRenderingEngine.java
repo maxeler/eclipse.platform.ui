@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corporation and others.
+ * Copyright (c) 2008, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -99,8 +99,10 @@ import org.eclipse.swt.events.ShellAdapter;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Decorations;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Widget;
 import org.eclipse.ui.testing.TestableObject;
@@ -581,6 +583,17 @@ public class PartRenderingEngine implements IPresentationEngine {
 						control.setParent((Composite) parentWidget);
 					}
 				}
+			}
+
+			if (currentWidget instanceof Menu menu) {
+				if (parentWidget instanceof Decorations) {
+					Decorations currentParent = menu.getParent();
+					if (currentParent != parentWidget) {
+						menu.dispose();
+						return safeCreateGui(element, parentWidget, parentContext);
+					}
+				}
+
 			}
 
 			// Reparent the context (or the kid's context)
@@ -1151,8 +1164,6 @@ public class PartRenderingEngine implements IPresentationEngine {
 							}
 							advisor.eventLoopIdle(display);
 						}
-					} catch (ThreadDeath th) {
-						throw th;
 					} catch (Exception | Error err) {
 						handle(err, advisor);
 					}
@@ -1166,10 +1177,6 @@ public class PartRenderingEngine implements IPresentationEngine {
 				try {
 					advisor.eventLoopException(ex);
 				} catch (Throwable t) {
-					if (t instanceof ThreadDeath) {
-						throw (ThreadDeath) t;
-					}
-
 					// couldn't handle the exception, print to console
 					t.printStackTrace();
 				}

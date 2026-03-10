@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corporation and others.
+ * Copyright (c) 2009, 2026 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -14,10 +14,10 @@
 
 package org.eclipse.ui.tests.statushandlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,18 +37,17 @@ import org.eclipse.ui.internal.statushandlers.IStatusDialogConstants;
 import org.eclipse.ui.internal.statushandlers.StackTraceSupportArea;
 import org.eclipse.ui.internal.statushandlers.SupportTray;
 import org.eclipse.ui.statushandlers.StatusAdapter;
-import org.eclipse.ui.tests.SwtLeakTestWatcher;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestWatcher;
+import org.eclipse.ui.tests.SwtLeakExtension;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 public class SupportTrayTest {
 
-	@Rule
-	public TestWatcher swtLeakTestWatcher = new SwtLeakTestWatcher();
+	@RegisterExtension
+	public SwtLeakExtension swtLeakExtension = new SwtLeakExtension();
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		Policy.setErrorSupportProvider(null);
 	}
@@ -70,8 +69,7 @@ public class SupportTrayTest {
 	@Test
 	public void testDefaultSupportProviderEnablement(){
 		Map<Object, Object> dialogState = new HashMap<>();
-		Status status = new Status(IStatus.ERROR, "org.eclipse.ui.test",
-				"Message.", new NullPointerException());
+		IStatus status = Status.error("Message.", new NullPointerException());
 		StatusAdapter sa = new StatusAdapter(status);
 		dialogState.put(IStatusDialogConstants.CURRENT_STATUS_ADAPTER, sa);
 		SupportTray st = new SupportTray(dialogState, new NullListener());

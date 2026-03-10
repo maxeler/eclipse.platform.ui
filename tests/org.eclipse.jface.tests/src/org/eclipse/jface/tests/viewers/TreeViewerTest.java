@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2006 IBM Corporation and others.
+ * Copyright (c) 2000, 2025 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -13,8 +13,11 @@
  *******************************************************************************/
 package org.eclipse.jface.tests.viewers;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +34,7 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.swt.widgets.Widget;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class TreeViewerTest extends AbstractTreeViewerTest {
 
@@ -78,11 +81,9 @@ public class TreeViewerTest extends AbstractTreeViewerTest {
 		event.item = itemToExpand;
 		tree.notifyListeners(SWT.Expand, event);
 
-		assertTrue("The expanded widget child is not expanded", fTreeViewer.getExpandedState(trivialPathRoot));
-		assertTrue("The first child of the trivial path was not auto-expanded",
-				fTreeViewer.getExpandedState(trivialPathRoot.getFirstChild()));
-		assertFalse("Trivial path is expanded further than specified depth ",
-				fTreeViewer.getExpandedState(trivialPathRoot.getFirstChild().getFirstChild()));
+		assertTrue(fTreeViewer.getExpandedState(trivialPathRoot), "The expanded widget child is not expanded");
+		assertTrue(fTreeViewer.getExpandedState(trivialPathRoot.getFirstChild()), "The first child of the trivial path was not auto-expanded");
+		assertFalse(fTreeViewer.getExpandedState(trivialPathRoot.getFirstChild().getFirstChild()), "Trivial path is expanded further than specified depth ");
 	}
 
 	@Test
@@ -108,10 +109,89 @@ public class TreeViewerTest extends AbstractTreeViewerTest {
 		Queue<TestElement> elements = new ConcurrentLinkedQueue<>(Arrays.asList(rootElement.getChildren()));
 		while (!elements.isEmpty()) {
 			TestElement currentElement = elements.poll();
-			assertTrue("expansion for child was not processed: " + currentElement,
-					recursiveExpandedElements.contains(currentElement));
+			assertTrue(recursiveExpandedElements.contains(currentElement), "expansion for child was not processed: " + currentElement);
 			elements.addAll(Arrays.asList(currentElement.getChildren()));
 		}
 	}
 
+	@Test
+	public void testExpandCollapseToLevel() {
+		TestElement rootElement = TestElement.createModel(3, 1);
+		TestElement firstChild = rootElement.getChildAt(0);
+		TestElement secondChild = firstChild.getChildAt(0);
+		TestElement lastChild = secondChild.getChildAt(0);
+
+		fTreeViewer.setInput(rootElement);
+
+		/*
+		 * First block shows everything works with
+		 * collapseToLevel(AbstractTreeViewer.ALL_LEVELS);
+		 */
+		fTreeViewer.expandToLevel(rootElement, AbstractTreeViewer.ALL_LEVELS);
+		processEvents();
+		assertTrue(fTreeViewer.getExpandedState(firstChild), "1st should be expanded");
+		assertTrue(fTreeViewer.getExpandedState(secondChild), "2nd should be expanded");
+		assertFalse(fTreeViewer.getExpandedState(lastChild), "3rd should be always collapsed");
+
+		fTreeViewer.collapseToLevel(firstChild, AbstractTreeViewer.ALL_LEVELS);
+		processEvents();
+		assertFalse(fTreeViewer.getExpandedState(firstChild), "1st should be collapsed");
+		assertFalse(fTreeViewer.getExpandedState(secondChild), "2nd should be collapsed");
+		assertFalse(fTreeViewer.getExpandedState(lastChild), "3rd should be always collapsed");
+
+		/*
+		 * Main block shows regression with collapseToLevel(number);
+		 */
+		fTreeViewer.expandToLevel(rootElement, AbstractTreeViewer.ALL_LEVELS);
+		processEvents();
+		assertTrue(fTreeViewer.getExpandedState(firstChild), "1st should be expanded");
+		assertTrue(fTreeViewer.getExpandedState(secondChild), "2nd should be expanded");
+		assertFalse(fTreeViewer.getExpandedState(lastChild), "3rd should be always collapsed");
+
+		fTreeViewer.collapseToLevel(firstChild, 2);
+		processEvents();
+		assertFalse(fTreeViewer.getExpandedState(firstChild), "1st should be collapsed");
+		assertFalse(fTreeViewer.getExpandedState(secondChild), "2nd should be collapsed");
+		assertFalse(fTreeViewer.getExpandedState(lastChild), "3rd should be always collapsed");
+	}
+
+	/**
+	 * Removing the same element twice should not produce a dummy tree-item.
+	 */
+	@Test
+	public void testIssue3525() {
+		TestElement modelRoot = TestElement.createModel(2, 1);
+		TestElement modelParent = modelRoot.getChildAt(0);
+		TestElement modelChild = modelParent.getChildAt(0);
+		fTreeViewer.setInput(modelRoot);
+		fTreeViewer.expandAll();
+		processEvents();
+		TreeItem widgetParent = (TreeItem) fTreeViewer.testFindItem(modelParent);
+		TreeItem widgetChild = (TreeItem) fTreeViewer.testFindItem(modelChild);
+		assertNotNull(widgetParent);
+		assertNotNull(widgetChild);
+		assertArrayEquals(widgetParent.getItems(), new TreeItem[] { widgetChild });
+
+		// This workaround is needed because of TreeViewerWithLimitCompatibilityTest
+		// When calling setDisplayIncrementally(...) with a positive number, you are
+		// no longer able to remove elements from the viewer without first removing
+		// them from the model
+		modelParent.fChildren.remove(modelChild);
+		fTreeViewer.remove(modelChild);
+		modelParent.fChildren.add(modelChild);
+		processEvents();
+		widgetParent = (TreeItem) fTreeViewer.testFindItem(modelParent);
+		widgetChild = (TreeItem) fTreeViewer.testFindItem(modelChild);
+		assertNotNull(widgetParent);
+		assertNull(widgetChild);
+		assertArrayEquals(widgetParent.getItems(), new TreeItem[0]);
+
+		fTreeViewer.remove(modelChild);
+		processEvents();
+		widgetParent = (TreeItem) fTreeViewer.testFindItem(modelParent);
+		widgetChild = (TreeItem) fTreeViewer.testFindItem(modelChild);
+		assertNotNull(widgetParent);
+		assertNull(widgetChild);
+		assertArrayEquals(widgetParent.getItems(), new TreeItem[0]);
+	}
 }

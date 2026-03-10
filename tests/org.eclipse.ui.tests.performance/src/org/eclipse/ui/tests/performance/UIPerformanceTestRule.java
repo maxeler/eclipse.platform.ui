@@ -23,16 +23,35 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.rules.ExternalResource;
 
-public class UIPerformanceTestRule extends ExternalResource {
+public class UIPerformanceTestRule extends ExternalResource implements BeforeAllCallback, AfterAllCallback {
 	public static final String PERSPECTIVE1 = "org.eclipse.ui.tests.performancePerspective1";
 	public static final String PERSPECTIVE2 = "org.eclipse.ui.tests.performancePerspective2";
 
 	public static final String PROJECT_NAME = "Performance Project";
 
-	private static final String INTRO_VIEW = "org.eclipse.ui.internal.introview";
-	public static final String[] EDITOR_FILE_EXTENSIONS = { "perf_basic", "perf_outline", "java" };
+	public static final String INTRO_VIEW = "org.eclipse.ui.internal.introview";
+	public static final String[] EDITOR_FILE_EXTENSIONS = { "perf_basic", "perf_outline", "perf_text" };
+
+	@Override
+	public void beforeAll(ExtensionContext context) throws Exception {
+		try {
+			before();
+		} catch (Exception e) {
+			throw e;
+		} catch (Throwable e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Override
+	public void afterAll(ExtensionContext context) throws Exception {
+		after();
+	}
 
 	@Override
 	protected void before() throws Throwable {
@@ -67,7 +86,7 @@ public class UIPerformanceTestRule extends ExternalResource {
 	}
 
 	private static void setUpProject() throws CoreException {
-		// Create a java project.
+		// Create a performance project.
 		IProject testProject = getTestProject();
 		testProject.create(null);
 		testProject.open(null);

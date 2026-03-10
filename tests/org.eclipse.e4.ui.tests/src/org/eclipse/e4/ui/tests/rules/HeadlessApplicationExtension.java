@@ -19,12 +19,12 @@ import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.ui.internal.workbench.swt.E4Application;
 import org.eclipse.e4.ui.services.ContextServiceAddon;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 
-public class HeadlessApplicationRule implements TestRule {
+public class HeadlessApplicationExtension implements BeforeEachCallback, AfterEachCallback {
 	private IEclipseContext applicationContext;
 
 	/**
@@ -35,28 +35,16 @@ public class HeadlessApplicationRule implements TestRule {
 	}
 
 	@Override
-	public Statement apply(Statement base, Description description) {
-		return new MyStatement(base);
+	public void beforeEach(ExtensionContext context) throws Exception {
+		applicationContext = createApplicationContext();
 	}
 
-	public class MyStatement extends Statement {
-		private final Statement base;
-
-		public MyStatement(Statement base) {
-			this.base = base;
-		}
-
-		@Override
-		public void evaluate() throws Throwable {
-			applicationContext = createApplicationContext();
-			try {
-				base.evaluate();
-			} finally {
-				applicationContext.dispose();
-			}
+	@Override
+	public void afterEach(ExtensionContext context) throws Exception {
+		if (applicationContext != null) {
+			applicationContext.dispose();
 		}
 	}
-
 
 	protected IEclipseContext createApplicationContext() {
 		final IEclipseContext appContext = E4Application.createDefaultContext();

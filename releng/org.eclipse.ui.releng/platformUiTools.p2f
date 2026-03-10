@@ -22,10 +22,20 @@
         <repository location='https://download.eclipse.org/tools/orbit/downloads/drops/R20230531010532/repository'/>
       </repositories>
     </iu>
-    <iu id='javax.inject' name='javax.inject' version='0.0.0'>
-        <repositories size='1'>
-            <repository location='https://download.eclipse.org/tools/orbit/downloads/drops/R20230531010532/repository'/>
-        </repositories>
+    <iu id='org.apache.commons.commons-fileupload' name='org.apache.commons.commons-fileupload' version='0.0.0'>
+      <repositories size='1'>
+        <repository location='https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/milestone/latest'/>
+      </repositories>
+    </iu>
+    <iu id='org.osgi.util.pushstream' name='org.osgi.util.pushstream' version='0.0.0'>
+      <repositories size='1'>
+        <repository location='https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/milestone/latest'/>
+      </repositories>
+    </iu>
+    <iu id='org.osgi.service.log.stream' name='org.osgi.service.log.stream' version='0.0.0'>
+      <repositories size='1'>
+        <repository location='https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/milestone/latest'/>
+      </repositories>
     </iu>
     <iu id='assertj-core' name='assertj-core' version='3.21.0'>
       <repositories size='1'>
@@ -128,16 +138,6 @@
         </repositories>
     </iu>
     <iu id='org.eclipse.equinox.executable.feature.group' name='Eclipse platform launcher executables' version='0.0.0'>
-        <repositories size='1'>
-            <repository location='https://download.eclipse.org/eclipse/updates/I-builds'/>
-        </repositories>
-    </iu>
-    <iu id='org.eclipse.cdt.core.native' name='CDT native bits' version='0.0.0'>
-        <repositories size='1'>
-            <repository location='https://download.eclipse.org/eclipse/updates/I-builds'/>
-        </repositories>
-    </iu>
-    <iu id='org.eclipse.terminal.feature.feature.group' name='Terminal feature' version='0.0.0'>
         <repositories size='1'>
             <repository location='https://download.eclipse.org/eclipse/updates/I-builds'/>
         </repositories>
