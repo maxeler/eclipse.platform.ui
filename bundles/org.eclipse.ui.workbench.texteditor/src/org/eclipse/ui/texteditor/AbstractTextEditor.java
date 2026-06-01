@@ -2335,9 +2335,20 @@ public abstract class AbstractTextEditor extends EditorPart
 	public static final String PREFERENCE_SHOW_LINE_FEED = "showLineFeed"; //$NON-NLS-1$
 
 	/**
-	 * A named preference that controls the alpha value of whitespace characters.
-	 * The value is used only if the value of
+	 * A named preference that controls the display of zero-width characters like
+	 * zero-width space. The value is used only if the value of
 	 * {@link #PREFERENCE_SHOW_WHITESPACE_CHARACTERS} is <code>true</code>.
+	 * <p>
+	 * Value is of type <code>Boolean</code>.
+	 * </p>
+	 *
+	 * @since 3.20
+	 */
+	public static final String PREFERENCE_SHOW_ZW_CHARACTERS = "showZwsp"; //$NON-NLS-1$
+
+	/**
+	 * A named preference that controls the alpha value of whitespace characters. The value is used
+	 * only if the value of {@link #PREFERENCE_SHOW_WHITESPACE_CHARACTERS} is <code>true</code>.
 	 * <p>
 	 * Value is of type <code>Integer</code>.
 	 * </p>
@@ -4136,14 +4147,13 @@ public abstract class AbstractTextEditor extends EditorPart
 	 * Creates a color from the information stored in the given preference store.
 	 * Returns <code>null</code> if there is no such information available.
 	 *
-	 * @param store   the store to read from
-	 * @param key     the key used for the lookup in the preference store
-	 * @param display the display used create the color
+	 * @param store the store to read from
+	 * @param key   the key used for the lookup in the preference store
 	 * @return the created color according to the specification in the preference
 	 *         store
 	 * @since 2.0
 	 */
-	private Color createColor(IPreferenceStore store, String key, Display display) {
+	private Color createColor(IPreferenceStore store, String key) {
 
 		RGB rgb = null;
 
@@ -4156,7 +4166,7 @@ public abstract class AbstractTextEditor extends EditorPart
 			}
 
 			if (rgb != null) {
-				return new Color(display, rgb);
+				return new Color(rgb);
 			}
 		}
 
@@ -4179,22 +4189,22 @@ public abstract class AbstractTextEditor extends EditorPart
 
 			// ----------- foreground color --------------------
 			Color color = store.getBoolean(PREFERENCE_COLOR_FOREGROUND_SYSTEM_DEFAULT) ? null
-					: createColor(store, PREFERENCE_COLOR_FOREGROUND, styledText.getDisplay());
+					: createColor(store, PREFERENCE_COLOR_FOREGROUND);
 			styledText.setForeground(color);
 
 			// ---------- background color ----------------------
 			color = store.getBoolean(PREFERENCE_COLOR_BACKGROUND_SYSTEM_DEFAULT) ? null
-					: createColor(store, PREFERENCE_COLOR_BACKGROUND, styledText.getDisplay());
+					: createColor(store, PREFERENCE_COLOR_BACKGROUND);
 			styledText.setBackground(color);
 
 			// ----------- selection foreground color --------------------
 			color = store.getBoolean(PREFERENCE_COLOR_SELECTION_FOREGROUND_SYSTEM_DEFAULT) ? null
-					: createColor(store, PREFERENCE_COLOR_SELECTION_FOREGROUND, styledText.getDisplay());
+					: createColor(store, PREFERENCE_COLOR_SELECTION_FOREGROUND);
 			styledText.setSelectionForeground(color);
 
 			// ---------- selection background color ----------------------
 			color = store.getBoolean(PREFERENCE_COLOR_SELECTION_BACKGROUND_SYSTEM_DEFAULT) ? null
-					: createColor(store, PREFERENCE_COLOR_SELECTION_BACKGROUND, styledText.getDisplay());
+					: createColor(store, PREFERENCE_COLOR_SELECTION_BACKGROUND);
 			styledText.setSelectionBackground(color);
 
 		}
@@ -4212,9 +4222,7 @@ public abstract class AbstractTextEditor extends EditorPart
 		IPreferenceStore store = getPreferenceStore();
 		if (store != null) {
 
-			StyledText styledText = viewer.getTextWidget();
-
-			Color color = createColor(store, PREFERENCE_COLOR_FIND_SCOPE, styledText.getDisplay());
+			Color color = createColor(store, PREFERENCE_COLOR_FIND_SCOPE);
 
 			IFindReplaceTarget target = viewer.getFindReplaceTarget();
 			if (target instanceof IFindReplaceTargetExtension) {

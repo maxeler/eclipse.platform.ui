@@ -1211,7 +1211,7 @@
    </extension>
    
    <extension
-   		point="org.eclipse.core.runtime.contentTypes">
+   		point="org.eclipse.core.contenttype.contentTypes">
    		
       	<!-- ObjectContributionTest: This is the content-type-based object contribution -->
 		<content-type 
@@ -3909,6 +3909,24 @@
          <command
                commandId="org.eclipse.ui.tests.anypopup.command3"
                style="push">
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:org.eclipse.ui.menus.showInMenu">
+         <command
+               commandId="org.eclipse.ui.tests.menus.showInMenuTestItem"
+               label="Show In Menu Test Item"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+               </with>
+            </visibleWhen>
          </command>
       </menuContribution>
    </extension>

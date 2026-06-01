@@ -18,19 +18,17 @@ import java.io.File;
 import java.io.InputStream;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 
@@ -77,7 +75,7 @@ public class ResourceHelper {
 				i= MAX_RETRY;
 			} catch (CoreException x) {
 				if (i == MAX_RETRY - 1) {
-					FileBuffersTestPlugin.getDefault().getLog().log(x.getStatus());
+					ILog.of(ResourceHelper.class).log(x.getStatus());
 //					throw x;
 				}
 				try {
@@ -91,17 +89,13 @@ public class ResourceHelper {
 	public static IFolder createFolder(String portableFolderPath) throws CoreException {
 		ContainerCreator creator= new ContainerCreator(ResourcesPlugin.getWorkspace(), IPath.fromOSString(portableFolderPath));
 		IContainer container= creator.createContainer(NULL_MONITOR);
-		if (container instanceof IFolder)
-			return (IFolder) container;
+		if (container instanceof IFolder folder)
+			return folder;
 		return null;
 	}
 
 	public static IFile createFile(IFolder folder, String name, String contents) throws CoreException {
 		return createFile(folder.getFile(name), contents);
-	}
-
-	public static IFile createFile(IProject project, String name, String contents) throws CoreException {
-		return createFile(project.getFile(name), contents);
 	}
 
 	private static IFile createFile(IFile file, String contents) throws CoreException {
@@ -138,21 +132,4 @@ public class ResourceHelper {
 		return iFolder;
 	}
 
-	public static IProject createLinkedProject(String projectName, Plugin plugin, IPath linkPath) throws CoreException {
-		IWorkspace workspace= ResourcesPlugin.getWorkspace();
-		IProject project= workspace.getRoot().getProject(projectName);
-
-		IProjectDescription desc= workspace.newProjectDescription(projectName);
-		File file= FileTool.getFileInPlugin(plugin, linkPath);
-		IPath projectLocation= IPath.fromOSString(file.getAbsolutePath());
-		if (Platform.getLocation().equals(projectLocation))
-			projectLocation= null;
-		desc.setLocation(projectLocation);
-
-		project.create(desc, NULL_MONITOR);
-		if (!project.isOpen())
-			project.open(NULL_MONITOR);
-
-		return project;
-	}
 }

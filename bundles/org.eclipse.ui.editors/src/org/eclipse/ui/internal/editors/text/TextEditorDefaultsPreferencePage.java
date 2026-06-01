@@ -68,6 +68,8 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.jface.widgets.ButtonFactory;
+import org.eclipse.jface.widgets.WidgetFactory;
 
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
@@ -451,7 +453,9 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_ENCLOSED_TABS));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_TRAILING_TABS));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_CARRIAGE_RETURN));
-			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_LINE_FEED));
+			 overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_LINE_FEED));
+			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN,
+					AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_ZW_CHARACTERS));
 			overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_WHITESPACE_CHARACTER_ALPHA_VALUE));
 
 			OverlayPreferenceStore.OverlayKey[] keys= new OverlayPreferenceStore.OverlayKey[overlayKeys.size()];
@@ -570,6 +574,15 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 			checkbox.setEnabled(false);
 			preference= new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_LINE_FEED, "", null); //$NON-NLS-1$
 			addCheckBox(tabularComposite, preference, new BooleanDomain(), 0);
+
+			WidgetFactory.label(SWT.NONE).text(TextEditorMessages.TextEditorDefaultsPreferencePage_zwcharacters)
+					.layoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false)).create(tabularComposite);
+			ButtonFactory checkboxFactory = WidgetFactory.button(SWT.CHECK)
+					.supplyLayoutData(() -> new GridData(SWT.CENTER, SWT.CENTER, false, false)).enabled(false);
+			checkboxFactory.create(tabularComposite);
+			preference = new Preference(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_ZW_CHARACTERS, "", null); //$NON-NLS-1$
+			addCheckBox(tabularComposite, preference, new BooleanDomain(), 0);
+			checkboxFactory.create(tabularComposite);
 
 			Composite alphaComposite= new Composite(composite, SWT.NONE);
 			layout= new GridLayout();
@@ -809,6 +822,8 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_TRAILING_TABS));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_CARRIAGE_RETURN));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_LINE_FEED));
+		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.BOOLEAN,
+				AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SHOW_ZW_CHARACTERS));
 		overlayKeys.add(new OverlayPreferenceStore.OverlayKey(OverlayPreferenceStore.INT, AbstractDecoratedTextEditorPreferenceConstants.EDITOR_WHITESPACE_CHARACTER_ALPHA_VALUE));
 
 		OverlayPreferenceStore.OverlayKey[] keys= new OverlayPreferenceStore.OverlayKey[overlayKeys.size()];
@@ -1132,14 +1147,14 @@ public class TextEditorDefaultsPreferencePage extends PreferencePage implements 
 					return null;
 				}
 				RGB rgb= colorEntry.isSystemDefault() ? colorEntry.systemColorRGB : colorEntry.getRGB();
-				Color color= new Color(tableComposite.getParent().getDisplay(), rgb.red, rgb.green, rgb.blue);
+				Color color= new Color(rgb.red, rgb.green, rgb.blue);
 				int dimensions= 10;
 				final ImageGcDrawer imageGcDrawer = (gc, width, height) -> {
 					// Draw color preview
 					gc.setBackground(color);
 					gc.fillRectangle(0, 0, width, height);
 					// Draw outline around color preview
-					gc.setBackground(new Color(tableComposite.getParent().getDisplay(), 0, 0, 0));
+					gc.setBackground(new Color(0, 0, 0));
 					gc.setLineWidth(2);
 					gc.drawRectangle(0, 0, width, height);
 				};

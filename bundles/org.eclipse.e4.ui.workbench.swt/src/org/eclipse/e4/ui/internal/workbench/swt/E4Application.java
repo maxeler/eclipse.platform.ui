@@ -38,6 +38,8 @@ import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.RegistryFactory;
+import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.UserScope;
 import org.eclipse.e4.core.contexts.ContextFunction;
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.EclipseContextFactory;
@@ -315,9 +317,20 @@ public class E4Application implements IApplication {
 				: getArgValue(E4Application.THEME_ID, applicationContext, false);
 
 		if (!themeId.isPresent() && !cssURI.isPresent()) {
-			context.set(E4Application.THEME_ID, DEFAULT_THEME_ID);
+			String defaultThemeId = getProductScopedThemeId();
+			if (defaultThemeId != null) {
+				context.set(E4Application.THEME_ID, defaultThemeId);
+			} else {
+				context.set(E4Application.THEME_ID, DEFAULT_THEME_ID);
+			}
 		} else {
-			context.set(E4Application.THEME_ID, themeId.orElseGet(() -> null));
+			// Check if user has overridden the branding/command-line theme
+			String userThemeId = getProductScopedThemeId();
+			if (userThemeId != null) {
+				context.set(E4Application.THEME_ID, userThemeId);
+			} else {
+				context.set(E4Application.THEME_ID, themeId.orElseGet(() -> null));
+			}
 		}
 
 
@@ -396,6 +409,33 @@ public class E4Application implements IApplication {
 		}
 		return applicationModelURI;
 
+	}
+
+	/**
+	 * Returns the product ID if a product is configured, otherwise falls back to
+	 * the application ID from the system property. Returns {@code null} if
+	 * neither is available.
+	 */
+	private static String getProductOrApplicationId() {
+		IProduct product = Platform.getProduct();
+		if (product != null) {
+			return product.getId();
+		}
+		return System.getProperty("eclipse.application"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns the user's product-scoped theme preference, or {@code null} if
+	 * none is set.
+	 */
+	private static String getProductScopedThemeId() {
+		String productOrAppId = getProductOrApplicationId();
+		if (productOrAppId != null) {
+			IEclipsePreferences themeNode = UserScope.INSTANCE
+					.getNode("org.eclipse.e4.ui.css.swt.theme");
+			return themeNode.node(productOrAppId).get("themeid", null);
+		}
+		return null;
 	}
 
 	/**

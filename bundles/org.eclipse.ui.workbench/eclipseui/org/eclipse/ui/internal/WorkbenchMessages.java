@@ -49,8 +49,17 @@ public class WorkbenchMessages extends NLS {
 	public static String RescaleAtRuntimeSettingChangeWarningText;
 
 	public static String ThemeChangeWarningText;
-
+	public static String ThemeChange_useAsDefault;
 	public static String ThemeChangeWarningTitle;
+	public static String ThemeDefault_manageButton;
+	public static String ThemeDefault_dialogTitle;
+	public static String ThemeDefault_description;
+	public static String ThemeDefault_currentDefault;
+	public static String ThemeDefault_currentDefaultUnscoped;
+	public static String ThemeDefault_noDefault;
+	public static String ThemeDefault_noDefaultUnscoped;
+	public static String ThemeDefault_setDefault;
+	public static String ThemeDefault_removeDefault;
 
 	public static String BundleSigningTray_Cant_Find_Service;
 
@@ -474,13 +483,14 @@ public class WorkbenchMessages extends NLS {
 	public static String ViewsPreferencePage_Theme;
 	public static String ViewsPreference_currentTheme;
 	public static String ViewsPreference_currentThemeFormat;
-	public static String ViewsPreference_useRoundTabs;
 	public static String ViewsPreference_visibleTabs_description;
 	public static String ViewsPreference_enableMRU;
 	public static String ViewsPreference_useColoredLabels;
 	public static String ViewsPreference_viewTabs_icons_and_titles_label;
 	public static String ViewsPreference_showFullTextForViewTabs;
 	public static String ViewsPreference_hideIconsForViewTabs;
+	public static String ViewsPreference_viewTabs_dirty_indicator_label;
+	public static String ViewsPreference_showDirtyIndicatorForTabs;
 	public static String ToggleFullScreenMode_ActivationPopup_Description;
 	public static String ToggleFullScreenMode_ActivationPopup_Description_NoKeybinding;
 	public static String ToggleFullScreenMode_ActivationPopup_DoNotShowAgain;
@@ -1042,5 +1052,15 @@ public class WorkbenchMessages extends NLS {
 	public static String Workbench_zoomChangedMessage;
 	public static String Workbench_RestartButton;
 	public static String Workbench_DontRestartButton;
+
+	public static String IDEApplication_workspaceLockOwner;
+	public static String IDEApplication_workspaceLockHost;
+	public static String IDEApplication_workspaceLockDisplay;
+	public static String IDEApplication_workspaceLockPID;
+	public static String IDEApplication_workspaceLockMessage;
+	public static String IDEApplication_workspaceCannotLockMessage2;
+	public static String IDEApplication_workspaceCannotLockTitle;
+
+	public static String OpenWorkspaceAction_invalidWorkspacePath;
 
 }

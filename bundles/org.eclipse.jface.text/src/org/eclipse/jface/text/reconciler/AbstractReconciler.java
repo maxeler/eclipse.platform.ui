@@ -15,9 +15,13 @@ package org.eclipse.jface.text.reconciler;
 
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobFunction;
 import org.eclipse.core.runtime.jobs.Job;
+
+import org.eclipse.jface.internal.text.reconciler.ReconcilerJobFamilies;
 
 import org.eclipse.jface.text.DocumentEvent;
 import org.eclipse.jface.text.IDocument;
@@ -136,14 +140,13 @@ abstract public class AbstractReconciler implements IReconciler {
 		 */
 		public void reset() {
 
+			reconcilerReset();
+
 			if (fDelay > 0) {
 
 				synchronized (this) {
 					fIsDirty= true;
 					fReset= true;
-				}
-				synchronized (fDirtyRegionQueue) {
-					fDirtyRegionQueue.notifyAll(); // wake up wait(fDelay);
 				}
 
 			} else {
@@ -151,14 +154,13 @@ abstract public class AbstractReconciler implements IReconciler {
 				synchronized (this) {
 					fIsDirty= true;
 				}
-
-				synchronized (fDirtyRegionQueue) {
-					fDirtyRegionQueue.notifyAll();
-				}
 			}
 
 			informNotFinished();
-			reconcilerReset();
+
+			synchronized (fDirtyRegionQueue) {
+				fDirtyRegionQueue.notifyAll();
+			}
 		}
 
 		/**
@@ -227,7 +229,7 @@ abstract public class AbstractReconciler implements IReconciler {
 			if (!fStarted) {
 				fIsAlive= true;
 				fStarted= true;
-				Job.createSystem("Delayed Reconciler startup for " + fName, m -> { //$NON-NLS-1$
+				new ReconcilerJob("Delayed Reconciler startup for " + fName, m -> { //$NON-NLS-1$
 					//Until we process some code from the job, the reconciler thread is the current thread
 					fThread= Thread.currentThread();
 					delay();
@@ -678,5 +680,26 @@ abstract public class AbstractReconciler implements IReconciler {
 			return false;
 		}
 		return Thread.currentThread() == fWorker.fThread;
+	}
+
+	private static class ReconcilerJob extends Job {
+
+		private final IJobFunction function;
+
+		private ReconcilerJob(String name, IJobFunction function) {
+			super(name);
+			setSystem(true);
+			this.function= function;
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			return function.run(monitor);
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return ReconcilerJobFamilies.FAMILY_RECONCILER == family;
+		}
 	}
 }

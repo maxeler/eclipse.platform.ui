@@ -64,7 +64,6 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.Widget;
-import org.eclipse.ui.tests.harness.util.DisplayHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -2436,7 +2435,11 @@ public class PartRenderingEngineTests {
 		partStackForEditor.getChildren().add(editor);
 		partStackForEditor.setSelectedElement(editor);
 
-		ContextInjectionFactory.make(CleanupAddon.class, appContext);
+		// Store the addon in the context so it isn't garbage collected before
+		// its event handlers fire. The DI framework holds injected objects
+		// only via WeakReference, so an addon discarded here can be collected
+		// before its asyncExec runs, silently invalidating the requestor.
+		appContext.set(CleanupAddon.class, ContextInjectionFactory.make(CleanupAddon.class, appContext));
 
 		contextRule.createAndRunWorkbench(window);
 
@@ -2446,13 +2449,11 @@ public class PartRenderingEngineTests {
 
 		assertTrue(partStackForPartBPartC.isToBeRendered(), " PartStack with children should be rendered");
 		partService.hidePart(partB);
+		contextRule.spinEventLoop();
 		partService.hidePart(partC);
-		// DisplayHelper.waitForCondition() handles event processing via Display.sleep()
-		// and retries. Calling spinEventLoop() here creates a race condition where
-		// events may be processed before CleanupAddon's asyncExec() is queued (line 352).
-		assertTrue(
-				DisplayHelper.waitForCondition(Display.getDefault(), 30_000,
-						() -> !partStackForPartBPartC.isToBeRendered()), "CleanupAddon should ensure that partStack is not rendered anymore, as all childs have been removed");
+		contextRule.spinEventLoop();
+		assertFalse(partStackForPartBPartC.isToBeRendered(),
+				"CleanupAddon should ensure that partStack is not rendered anymore, as all childs have been removed");
 		// PartStack with IPresentationEngine.NO_AUTO_COLLAPSE should not be removed
 		// even if children are removed
 		partService.hidePart(editor, true);
@@ -2495,7 +2496,8 @@ public class PartRenderingEngineTests {
 		partStackB.getChildren().add(partC);
 		partStackB.setSelectedElement(partC);
 
-		ContextInjectionFactory.make(CleanupAddon.class, appContext);
+		// See ensureCleanUpAddonCleansUp for why the addon is stored in the context.
+		appContext.set(CleanupAddon.class, ContextInjectionFactory.make(CleanupAddon.class, appContext));
 
 		contextRule.createAndRunWorkbench(window);
 

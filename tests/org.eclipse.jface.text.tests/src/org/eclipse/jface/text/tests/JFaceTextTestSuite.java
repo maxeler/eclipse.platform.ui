@@ -26,12 +26,14 @@ import org.eclipse.jface.text.tests.contentassist.FilteringAsyncContentAssistTes
 import org.eclipse.jface.text.tests.contentassist.IncrementalAsyncContentAssistTests;
 import org.eclipse.jface.text.tests.reconciler.AbstractReconcilerTest;
 import org.eclipse.jface.text.tests.reconciler.FastAbstractReconcilerTest;
+import org.eclipse.jface.text.tests.reconciler.ReconcilerResetOrderingTest;
 import org.eclipse.jface.text.tests.rules.FastPartitionerTest;
 import org.eclipse.jface.text.tests.rules.FastPartitionerZeroLengthTest;
 import org.eclipse.jface.text.tests.rules.ScannerColumnTest;
 import org.eclipse.jface.text.tests.rules.WordRuleTest;
 import org.eclipse.jface.text.tests.source.AnnotationRulerColumnTest;
 import org.eclipse.jface.text.tests.source.LineNumberRulerColumnTest;
+import org.eclipse.jface.text.tests.source.SourceViewerComputeStyleRangesTest;
 import org.eclipse.jface.text.tests.source.inlined.AnnotationOnTabTest;
 import org.eclipse.jface.text.tests.source.inlined.LineContentBoundsDrawingTest;
 import org.eclipse.jface.text.tests.templates.persistence.TemplatePersistenceDataTest;
@@ -45,6 +47,7 @@ import org.eclipse.jface.text.tests.templates.persistence.TemplatePersistenceDat
 @SelectClasses({
 		AnnotationRulerColumnTest.class,
 		LineNumberRulerColumnTest.class,
+		SourceViewerComputeStyleRangesTest.class,
 		HTML2TextReaderTest.class,
 		TextHoverPopupTest.class,
 		TextPresentationTest.class,
@@ -61,6 +64,7 @@ import org.eclipse.jface.text.tests.templates.persistence.TemplatePersistenceDat
 
 		AbstractReconcilerTest.class,
 		FastAbstractReconcilerTest.class,
+		ReconcilerResetOrderingTest.class,
 
 		FastPartitionerZeroLengthTest.class,
 		FastPartitionerTest.class,

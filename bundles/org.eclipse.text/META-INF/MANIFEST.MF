@@ -2,9 +2,10 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
 Bundle-SymbolicName: org.eclipse.text
-Bundle-Version: 3.14.600.qualifier
+Bundle-Version: 3.14.700.qualifier
 Bundle-Vendor: %providerName
 Bundle-Localization: plugin
+Bundle-Activator: org.eclipse.text.internal.Activator
 Export-Package: 
  org.eclipse.jface.text; text="split"; mandatory:="text",
  org.eclipse.jface.text.link; text="split"; mandatory:="text",
@@ -24,3 +25,4 @@ Require-Bundle:
  org.eclipse.core.runtime;bundle-version="[3.29.0,4.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Automatic-Module-Name: org.eclipse.text
+Bundle-ActivationPolicy: lazy

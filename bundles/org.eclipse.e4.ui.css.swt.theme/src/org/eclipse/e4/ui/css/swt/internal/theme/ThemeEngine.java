@@ -37,10 +37,12 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.RegistryFactory;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.e4.ui.css.core.engine.CSSElementContext;
 import org.eclipse.e4.ui.css.core.engine.CSSEngine;
@@ -85,6 +87,8 @@ public class ThemeEngine implements IThemeEngine {
 	public static final String THEME_PLUGIN_ID = "org.eclipse.e4.ui.css.swt.theme";
 
 	public static final String E4_DARK_THEME_ID = "org.eclipse.e4.ui.css.theme.e4_dark";
+
+	public static final String E4_DEFAULT_THEME_ID = "org.eclipse.e4.ui.css.theme.e4_default";
 
 	public static final String DISABLE_OS_DARK_THEME_INHERIT = "org.eclipse.e4.ui.css.theme.disableOSDarkThemeInherit";
 
@@ -424,8 +428,14 @@ public class ThemeEngine implements IThemeEngine {
 		for (Theme t : themes) {
 			if (t.getId().equals(themeId)) {
 				setTheme(t, restore);
-				break;
+				return;
 			}
+		}
+		// Theme not found (e.g. it was uninstalled); fall back to default
+		ILog.of(ThemeEngine.class)
+				.warn("Theme '" + themeId + "' not found; falling back to default theme."); //$NON-NLS-1$ //$NON-NLS-2$
+		if (!E4_DEFAULT_THEME_ID.equals(themeId)) {
+			setTheme(E4_DEFAULT_THEME_ID, restore);
 		}
 	}
 
@@ -501,6 +511,9 @@ public class ThemeEngine implements IThemeEngine {
 				ThemeEngineManager.logError(e.getMessage(), e);
 			}
 		}
+		boolean isDark = theme.getId().contains("dark"); //$NON-NLS-1$
+		display.setDarkThemePreferred(isDark);
+
 		sendThemeChangeEvent(restore);
 
 		for (CSSEngine engine : cssEngines) {
@@ -556,7 +569,8 @@ public class ThemeEngine implements IThemeEngine {
 	}
 
 	private String getPreferenceThemeId() {
-		return getPreferences().get(THEMEID_KEY, null);
+		IPreferencesService prefService = Platform.getPreferencesService();
+		return prefService.getString(THEME_PLUGIN_ID, THEMEID_KEY, null, null);
 	}
 
 	private IEclipsePreferences getPreferences() {
@@ -577,15 +591,6 @@ public class ThemeEngine implements IThemeEngine {
 	@Override
 	public void restore(String alternateTheme) {
 		String prefThemeId = getPreferenceThemeId();
-
-		// Bug 562794, 563601: Eclipse once contained two identical themes named
-		// "Classic" and "Windows Classic" and the second was removed with bug 562794.
-		// An old workspace using the removed "Windows Classic" theme would be reseted
-		// to the default theme on update. Since both themes are identical we silently
-		// change the theme to the remaining "Classic" theme and don't disturb the user.
-		if ("org.eclipse.e4.ui.css.theme.e4_classic6.0,6.1,6.2,6.3".equals(prefThemeId)) { //$NON-NLS-1$
-			prefThemeId = "org.eclipse.e4.ui.css.theme.e4_classic"; //$NON-NLS-1$
-		}
 
 		// use theme from preferences if it exists
 		if (prefThemeId != null) {

@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobGroup;
+import org.eclipse.core.runtime.preferences.IPreferencesService;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResourceStatus;
@@ -70,6 +71,7 @@ public class TextSearchVisitor {
 
 	public static final boolean TRACING= "true".equalsIgnoreCase(Platform.getDebugOption("org.eclipse.search/perf")); //$NON-NLS-1$ //$NON-NLS-2$
 	private static final int NUMBER_OF_LOGICAL_THREADS= Runtime.getRuntime().availableProcessors();
+	private static final String DISABLE_RESTRICTED_FILE_SEARCH_PREFERENCE = "disableRestrictedFileSearch"; //$NON-NLS-1$
 
 	/**
 	 * Queue of files to be searched. IFile pointing to the same local file are
@@ -185,8 +187,6 @@ public class TextSearchVisitor {
 		}
 
 		public IStatus processFile(List<IFile> sameFiles, IProgressMonitor monitor) {
-			// A natural cleanup after the change to use JobGroups is accepted would be to move these
-			// methods to the TextSearchJob class.
 			Matcher matcher= fSearchPattern.pattern().isEmpty() ? null : fSearchPattern.matcher(""); //$NON-NLS-1$
 			IFile file = sameFiles.remove(0);
 			monitor.setTaskName(file.getFullPath().toString());
@@ -260,9 +260,7 @@ public class TextSearchVisitor {
 				if (fIsLightweightAutoRefresh && IResourceStatus.RESOURCE_NOT_FOUND == e.getStatus().getCode()) {
 					return monitor.isCanceled() ? Status.CANCEL_STATUS : Status.OK_STATUS;
 				}
-				Object[] args= { getExceptionMessage(e), file.getFullPath().makeRelative().toString() };
-				String message = MessageFormat.format(SearchCoreMessages.TextSearchVisitor_error, args);
-				return new Status(IStatus.ERROR, SearchCorePlugin.PLUGIN_ID, IStatus.ERROR, message, e);
+				return errorStatusForFile(file, e);
 			} catch (StackOverflowError e) {
 				fFatalError= true;
 				String message= SearchCoreMessages.TextSearchVisitor_patterntoocomplex0;
@@ -302,6 +300,8 @@ public class TextSearchVisitor {
 	private volatile boolean fIsLightweightAutoRefresh;
 	private final DirtyFileProvider fDirtyDiscovery;
 
+	private final boolean fDisableRestrictedFileSearch;
+
 	public TextSearchVisitor(TextSearchRequestor collector, Pattern searchPattern, DirtyFileProvider dirtyDiscovery) {
 		fCollector= collector;
 		fDirtyDiscovery = dirtyDiscovery;
@@ -312,6 +312,10 @@ public class TextSearchVisitor {
 
 		fIsLightweightAutoRefresh= Platform.getPreferencesService().getBoolean(ResourcesPlugin.PI_RESOURCES, ResourcesPlugin.PREF_LIGHTWEIGHT_AUTO_REFRESH, false, null);
 		fileBatches = new ConcurrentLinkedQueue<>();
+
+		IPreferencesService prefs = Platform.getPreferencesService();
+		fDisableRestrictedFileSearch = prefs.getBoolean(SearchCorePlugin.PLUGIN_ID,
+				DISABLE_RESTRICTED_FILE_SEARCH_PREFERENCE, false, null);
 	}
 
 	public IStatus search(IFile[] files, IProgressMonitor monitor) {
@@ -345,6 +349,9 @@ public class TextSearchVisitor {
 				Map<String, List<IFile>> remoteFilesByLocation = new LinkedHashMap<>();
 
 				for (IFile file : files) {
+					if (excluded(file)) {
+						continue;
+					}
 					IPath path = file.getLocation();
 					String key = path == null ? file.getLocationURI().toString() : path.toString();
 					Map<String, List<IFile>> filesByLocation = (path != null) ? localFilesByLocation
@@ -513,8 +520,14 @@ public class TextSearchVisitor {
 		return occurences;
 	}
 
+	private static Status errorStatusForFile(IFile file, CoreException e) {
+		Object[] args = { getExceptionMessage(e), file.getFullPath().makeRelative().toString() };
+		String message = MessageFormat.format(SearchCoreMessages.TextSearchVisitor_error, args);
+		Status status = new Status(IStatus.ERROR, SearchCorePlugin.PLUGIN_ID, IStatus.ERROR, message, e);
+		return status;
+	}
 
-	private String getExceptionMessage(Exception e) {
+	private static String getExceptionMessage(Exception e) {
 		String message= e.getLocalizedMessage();
 		if (message == null) {
 			return e.getClass().getName();
@@ -542,4 +555,22 @@ public class TextSearchVisitor {
 		}
 	}
 
+	private boolean excluded(IFile file) {
+		if (fDisableRestrictedFileSearch) {
+			try {
+				return file.isContentRestricted();
+			} catch (CoreException e) {
+				/*
+				 * The preference 'disableRestrictedFileSearch' indicates we
+				 * should skip restricted files, but we ran into an exception
+				 * while checking if the file is restricted. Skip the file from
+				 * the search, since we don't know if the file is restricted or
+				 * not.
+				 */
+				fStatus.add(errorStatusForFile(file, e));
+				return true;
+			}
+		}
+		return false;
+	}
 }

@@ -20,6 +20,7 @@
 package org.eclipse.ui.internal.dialogs;
 
 import static org.eclipse.jface.viewers.LabelProvider.createTextProvider;
+import static org.eclipse.swt.events.SelectionListener.widgetSelectedAdapter;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_COLOR_AND_FONT_ID;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_OS_VERSION;
 import static org.eclipse.ui.internal.registry.IWorkbenchRegistryConstants.ATT_THEME_ASSOCIATION;
@@ -34,6 +35,7 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtension;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
+import org.eclipse.core.runtime.IProduct;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Platform.OS;
 import org.eclipse.core.runtime.RegistryFactory;
@@ -41,6 +43,7 @@ import org.eclipse.core.runtime.preferences.ConfigurationScope;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.core.runtime.preferences.UserScope;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.ui.css.swt.theme.ITheme;
 import org.eclipse.e4.ui.css.swt.theme.IThemeEngine;
@@ -50,6 +53,7 @@ import org.eclipse.e4.ui.model.application.MApplication;
 import org.eclipse.e4.ui.workbench.renderers.swt.CTabRendering;
 import org.eclipse.e4.ui.workbench.renderers.swt.StackRenderer;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ControlDecoration;
 import org.eclipse.jface.fieldassist.FieldDecorationRegistry;
@@ -61,7 +65,6 @@ import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -103,7 +106,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	private ControlDecoration themeComboDecorator;
 	private ITheme currentTheme;
 	private String defaultTheme;
-	private Button useRoundTabs;
 	private Button enableMru;
 	private Button useColoredLabels;
 
@@ -118,6 +120,8 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 	private Button hideIconsForViewTabs;
 	private Button showFullTextForViewTabs;
+
+	private Button showDirtyIndicatorForTabs;
 
 	@Override
 	protected Control createContents(Composite parent) {
@@ -150,7 +154,14 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 
 		new Label(comp, SWT.NONE).setText(WorkbenchMessages.ViewsPreferencePage_Theme);
 
-		themeIdCombo = new ComboViewer(comp, SWT.READ_ONLY);
+		Composite themeComposite = new Composite(comp, SWT.NONE);
+		GridLayout themeLayout = new GridLayout(2, false);
+		themeLayout.marginWidth = 0;
+		themeLayout.marginHeight = 0;
+		themeComposite.setLayout(themeLayout);
+		themeComposite.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+
+		themeIdCombo = new ComboViewer(themeComposite, SWT.READ_ONLY);
 		themeIdCombo.setLabelProvider(createTextProvider(element -> ((ITheme) element).getLabel()));
 		themeIdCombo.setContentProvider(ArrayContentProvider.getInstance());
 		themeIdCombo.setInput(engine.getThemes());
@@ -160,6 +171,11 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			themeIdCombo.setSelection(new StructuredSelection(currentTheme));
 		}
 		themeComboDecorator = new ControlDecoration(themeIdCombo.getCombo(), SWT.TOP | SWT.LEFT);
+
+		Button manageDefaultButton = new Button(themeComposite, SWT.PUSH);
+		manageDefaultButton.setText(WorkbenchMessages.ThemeDefault_manageButton);
+		manageDefaultButton.addSelectionListener(widgetSelectedAdapter(e -> openManageDefaultThemeDialog()));
+
 		themeIdCombo.addSelectionChangedListener(event -> {
 			ITheme selection = getSelectedTheme();
 			if (!selection.equals(currentTheme)) {
@@ -183,6 +199,8 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		createShowFullTextForViewTabs(comp);
 		createHideIconsForViewTabs(comp);
 		createDependency(showFullTextForViewTabs, hideIconsForViewTabs);
+
+		createShowDirtyIndicatorForTabs(comp);
 
 		createRescaleAtRuntimeCheckButton(comp);
 
@@ -236,7 +254,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	}
 
 	private void createThemeIndependentComposits(Composite comp) {
-		createUseRoundTabs(comp);
 		createColoredLabelsPref(comp);
 		createEnableMruPref(comp);
 	}
@@ -255,6 +272,15 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 				CTabRendering.HIDE_ICONS_FOR_VIEW_TABS_DEFAULT);
 		hideIconsForViewTabs = createCheckButton(composite, WorkbenchMessages.ViewsPreference_hideIconsForViewTabs,
 				actualValue);
+	}
+
+	protected void createShowDirtyIndicatorForTabs(Composite composite) {
+		boolean actualValue = getSwtRendererPreference(CTabRendering.SHOW_DIRTY_INDICATOR_ON_TABS,
+				CTabRendering.SHOW_DIRTY_INDICATOR_ON_TABS_DEFAULT);
+		createLabel(composite, ""); //$NON-NLS-1$
+		createLabel(composite, WorkbenchMessages.ViewsPreference_viewTabs_dirty_indicator_label);
+		showDirtyIndicatorForTabs = createCheckButton(composite,
+				WorkbenchMessages.ViewsPreference_showDirtyIndicatorForTabs, actualValue);
 	}
 
 	private boolean getSwtRendererPreference(String prefName, boolean defaultValue) {
@@ -313,11 +339,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		return label;
 	}
 
-	protected void createUseRoundTabs(Composite composite) {
-		boolean enabled = getSwtRendererPreference(CTabRendering.USE_ROUND_TABS, CTabRendering.USE_ROUND_TABS_DEFAULT);
-		useRoundTabs = createCheckButton(composite, WorkbenchMessages.ViewsPreference_useRoundTabs, enabled);
-	}
-
 	protected void createEnableMruPref(Composite composite) {
 		createLabel(composite, ""); //$NON-NLS-1$
 		createLabel(composite, WorkbenchMessages.ViewsPreference_visibleTabs_description);
@@ -329,6 +350,103 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 	/** @return the currently selected theme or null if there are no themes */
 	private ITheme getSelectedTheme() {
 		return (ITheme) (themeIdCombo.getStructuredSelection().getFirstElement());
+	}
+
+	private void openManageDefaultThemeDialog() {
+		String productOrAppId = getProductOrApplicationId();
+		IEclipsePreferences baseNode = UserScope.INSTANCE.getNode(E4_THEME_EXTENSION_POINT);
+		IEclipsePreferences scopedNode = productOrAppId != null ? (IEclipsePreferences) baseNode.node(productOrAppId)
+				: baseNode;
+		String currentDefaultId = scopedNode.get("themeid", null); //$NON-NLS-1$
+
+		String currentDefaultLabel = null;
+		if (currentDefaultId != null) {
+			for (ITheme t : engine.getThemes()) {
+				if (t.getId().equals(currentDefaultId)) {
+					currentDefaultLabel = t.getLabel();
+					break;
+				}
+			}
+			if (currentDefaultLabel == null) {
+				currentDefaultLabel = currentDefaultId;
+			}
+		}
+
+		String productDisplayName = getProductDisplayName();
+
+		String message;
+		if (currentDefaultLabel != null) {
+			if (productOrAppId != null) {
+				String displayName = productDisplayName != null ? productDisplayName : productOrAppId;
+				message = NLS.bind(WorkbenchMessages.ThemeDefault_currentDefault, new Object[] { currentDefaultLabel,
+						displayName, productOrAppId });
+			} else {
+				message = NLS.bind(WorkbenchMessages.ThemeDefault_currentDefaultUnscoped, currentDefaultLabel);
+			}
+		} else {
+			if (productOrAppId != null) {
+				String displayName = productDisplayName != null ? productDisplayName : productOrAppId;
+				message = NLS.bind(WorkbenchMessages.ThemeDefault_noDefault, displayName, productOrAppId);
+			} else {
+				message = WorkbenchMessages.ThemeDefault_noDefaultUnscoped;
+			}
+		}
+		message = WorkbenchMessages.ThemeDefault_description + "\n\n" + message; //$NON-NLS-1$
+
+		ITheme selectedTheme = getSelectedTheme();
+		List<String> buttonLabels = new ArrayList<>();
+		buttonLabels.add(WorkbenchMessages.ThemeDefault_setDefault);
+		if (currentDefaultId != null) {
+			buttonLabels.add(WorkbenchMessages.ThemeDefault_removeDefault);
+		}
+		buttonLabels.add(IDialogConstants.CLOSE_LABEL);
+
+		MessageDialog dialog = new MessageDialog(getShell(), WorkbenchMessages.ThemeDefault_dialogTitle, null, message,
+				MessageDialog.INFORMATION, 0, buttonLabels.toArray(new String[0]));
+
+		int result = dialog.open();
+		if (result == 0 && selectedTheme != null) {
+			// Set as default
+			scopedNode.put("themeid", selectedTheme.getId()); //$NON-NLS-1$
+			try {
+				scopedNode.flush();
+			} catch (BackingStoreException e) {
+				WorkbenchPlugin.log("Failed to set default theme in user scope", e); //$NON-NLS-1$
+			}
+		} else if (currentDefaultId != null && result == 1) {
+			// Remove default
+			scopedNode.remove("themeid"); //$NON-NLS-1$
+			try {
+				scopedNode.flush();
+			} catch (BackingStoreException e) {
+				WorkbenchPlugin.log("Failed to remove default theme from user scope", e); //$NON-NLS-1$
+			}
+		}
+	}
+
+	/**
+	 * Returns the product ID if a product is configured, otherwise falls back to
+	 * the application ID from the system property. Returns {@code null} if
+	 * neither is available.
+	 */
+	private static String getProductOrApplicationId() {
+		IProduct product = Platform.getProduct();
+		if (product != null) {
+			return product.getId();
+		}
+		return System.getProperty("eclipse.application"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns the product name if a product is configured, or {@code null}
+	 * otherwise.
+	 */
+	private static String getProductDisplayName() {
+		IProduct product = Platform.getProduct();
+		if (product != null) {
+			return product.getName();
+		}
+		return null;
 	}
 
 	@Override
@@ -350,6 +468,7 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 			prefs.putBoolean(CTabRendering.HIDE_ICONS_FOR_VIEW_TABS, hideIconsForViewTabs.getSelection());
 			prefs.putBoolean(CTabRendering.SHOW_FULL_TEXT_FOR_VIEW_TABS, showFullTextForViewTabs.getSelection());
+			prefs.putBoolean(CTabRendering.SHOW_DIRTY_INDICATOR_ON_TABS, showDirtyIndicatorForTabs.getSelection());
 		}
 
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
@@ -380,7 +499,6 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			}
 		}
 
-		prefs.putBoolean(CTabRendering.USE_ROUND_TABS, useRoundTabs.getSelection());
 		try {
 			prefs.flush();
 		} catch (BackingStoreException e) {
@@ -390,10 +508,11 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		boolean showRestartDialog = false;
 		String restartDialogTitle = null;
 		String restartDialogMessage = null;
+		boolean themeChanged = false;
 
 		if (isThemingPossible()) {
 			ITheme theme = getSelectedTheme();
-			boolean themeChanged = theme != null && !theme.equals(currentTheme);
+			themeChanged = theme != null && !theme.equals(currentTheme);
 			boolean colorsAndFontsThemeChanged = !PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getId()
 					.equals(currentColorsAndFontsTheme.getId());
 
@@ -427,16 +546,53 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 		}
 
 		if (showRestartDialog) {
-			showRestartDialog(restartDialogTitle, restartDialogMessage);
+			String themeId = null;
+			if (themeChanged) {
+				ITheme theme = getSelectedTheme();
+				if (theme != null) {
+					themeId = theme.getId();
+				}
+			}
+			showRestartDialog(restartDialogTitle, restartDialogMessage, themeId);
 		}
 
 		return super.performOk();
 	}
 
-	private void showRestartDialog(String title, String warningText) {
-		if (new MessageDialog(null, title, null, warningText, MessageDialog.NONE, 2,
-				WorkbenchMessages.Workbench_RestartButton, WorkbenchMessages.Workbench_DontRestartButton)
-						.open() == Window.OK) {
+	private void showRestartDialog(String title, String warningText, String themeId) {
+		boolean[] useAsDefault = { true };
+		MessageDialog dialog = new MessageDialog(null, title, null, warningText, MessageDialog.NONE, 2,
+				WorkbenchMessages.Workbench_RestartButton, WorkbenchMessages.Workbench_DontRestartButton) {
+			@Override
+			protected Control createCustomArea(Composite parent) {
+				if (themeId == null) {
+					return null;
+				}
+				Button checkbox = new Button(parent, SWT.CHECK);
+				checkbox.setText(WorkbenchMessages.ThemeChange_useAsDefault);
+				checkbox.setSelection(useAsDefault[0]);
+				checkbox.addSelectionListener(widgetSelectedAdapter(e -> useAsDefault[0] = checkbox.getSelection()));
+				return checkbox;
+			}
+		};
+		int result = dialog.open();
+		if (result == 0 || result == 1) { // 0: Restart, 1: Don't Restart
+			if (themeId != null && useAsDefault[0]) {
+				IEclipsePreferences baseNode = UserScope.INSTANCE
+						.getNode(E4_THEME_EXTENSION_POINT);
+				String productOrAppId = getProductOrApplicationId();
+				IEclipsePreferences scopedNode = productOrAppId != null
+						? (IEclipsePreferences) baseNode.node(productOrAppId)
+						: baseNode;
+				scopedNode.put("themeid", themeId); //$NON-NLS-1$
+				try {
+					scopedNode.flush();
+				} catch (BackingStoreException e) {
+					WorkbenchPlugin.log("Failed to set default theme in user scope", e); //$NON-NLS-1$
+				}
+			}
+		}
+		if (result == 0) {
 			Display.getDefault().asyncExec(() -> PlatformUI.getWorkbench().restart());
 		}
 	}
@@ -464,12 +620,12 @@ public class ViewsPreferencePage extends PreferencePage implements IWorkbenchPre
 			showFullTextForViewTabs.setSelection(defaultPrefs.getBoolean(CTabRendering.SHOW_FULL_TEXT_FOR_VIEW_TABS,
 					CTabRendering.SHOW_FULL_TEXT_FOR_VIEW_TABS_DEFAULT));
 			showFullTextForViewTabs.notifyListeners(SWT.Selection, null);
+			showDirtyIndicatorForTabs.setSelection(defaultPrefs.getBoolean(CTabRendering.SHOW_DIRTY_INDICATOR_ON_TABS,
+					CTabRendering.SHOW_DIRTY_INDICATOR_ON_TABS_DEFAULT));
 		}
 		IPreferenceStore apiStore = PrefUtil.getAPIPreferenceStore();
 		useColoredLabels.setSelection(apiStore.getDefaultBoolean(IWorkbenchPreferenceConstants.USE_COLORED_LABELS));
 
-		useRoundTabs.setSelection(
-				defaultPrefs.getBoolean(CTabRendering.USE_ROUND_TABS, CTabRendering.USE_ROUND_TABS_DEFAULT));
 		enableMru.setSelection(defaultPrefs.getBoolean(StackRenderer.MRU_KEY_DEFAULT, StackRenderer.MRU_DEFAULT));
 		super.performDefaults();
 	}
